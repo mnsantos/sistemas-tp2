@@ -12,12 +12,14 @@ class RWLock {
         void wunlock();
 
     private:
-	sem_t rw;
-	//~ sem_t algoMas;
-
+	sem_t rw_lock;
+	sem_t accessR;
+	sem_t accessW;
+		
 	sem_t mutex_r;	
-	sem_t mutex_w;	
 	int readers;
+
+	sem_t mutex_w;	
 	int writers;
 };
 
