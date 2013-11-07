@@ -52,9 +52,10 @@ void RWLock :: wlock() {
 	sem_signal(&mutex_w)
 	if(readers == 0){				//si no hay
 		//~ sem_wait(&mutex_w);			
-
-		sem_wait(&rw_lock); 		//esperamos nuestro turno, no hay escritura concurrente todos juntos, este semaforo deberia funcionar.		
+		
 		sem_signal(&mutex_r);
+		sem_wait(&rw_lock); 		//esperamos nuestro turno, no hay escritura concurrente todos juntos, este semaforo deberia funcionar.		
+		
 		
 		///escritura.
 		
