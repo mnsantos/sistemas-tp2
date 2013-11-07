@@ -36,8 +36,9 @@ void RWLock :: rlock() {
 		sem_wait(&accessR);			//esperamos el cambio de estado.
 									//cuando ganamos el acceso, writers deberia ser cero.
 		sem_wait(&mutex_r);
-		if (readers == 0){			//si soy el primero
+		if (readers == 1){			//si soy el primero
 			sem_wait(&rw_lock);		//tomo el rw_lock
+			readers--;
 		}
 		readers++;					//hacemos presencia		
 		sem_signal(&mutex_r);
@@ -66,6 +67,7 @@ void RWLock :: wlock() {
 		sem_wait(&accessW);			//pedimos acceso.
 									//con el acceso, no deberia haber lectores.
 		sem_wait(&mutex_w);
+		if (writers == 1) writers--;
 		writers++;
 		sem_signal(&mutex_w);
 		sem_wait(&rw_lock);		//tomo el rw_lock
@@ -80,10 +82,12 @@ void RWLock :: runlock() {
 	readers--;						//salimos
 	if (readers == 0){				//si somos el ultimo en salir
 		//~ sem_wait(&mutex_w);			//vemos si hay escritores esperando
-		for(int i = 0; i < writers; i++){
-			sem_signal(&accessW);			//si hay escritores, les cedemos el paso.
+		if (writers > 0){
+			for(int i = 0; i < writers; i++){
+				sem_signal(&accessW);			//si hay escritores, les cedemos el paso.
+			}
+			writers = 1;				//seteamos en uno escritores para que un lector no ocupe el lugar.
 		}
-		writers = 0;				//seteamos en cero escritores.
 		//~ sem_signal(&mutex_w);
 		sem_signal(&rw_lock);		//cedemos el lock.
 	}
@@ -97,10 +101,12 @@ void RWLock :: wunlock() {
 	sem_wait(&mutex_w);
 	writers--;
 	if (writers == 0){
-		for (int i = 0; i < readers; i++){
-			sem_signal(&accessR);
+		if (readers > 0){
+			for (int i = 0; i < readers; i++){
+				sem_signal(&accessR);
+			}
+			readers = 1;
 		}
-		readers = 0;
 	}
 	sem_signal(&rw_lock);
 	sem_signal(&mutex_w);
