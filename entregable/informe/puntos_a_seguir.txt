@@ -1,27 +1,27 @@
 Entregable:
 
-Deberán entregar el trabajo antes del Lunes 18 de Noviembre a las 23:59 mediante el sistema
-de entrega http://so.exp.dc.uba.ar/
+	Deberán entregar el trabajo antes del Lunes 18 de Noviembre a las 23:59 mediante el sistema
+	de entrega http://so.exp.dc.uba.ar/
 
 
 El trabajo consta de dos apartados:
 
 
-1. En primer lugar, deberán implementar un Read-Write Lock libre de inanición utilizando
-únicamente semáforos POSIX y respetando la interfaz provista en los archivos backend-multi/RWLock.h
-y backend-multi/RWLock.cpp. Esta implementación deberá tener tests que permitan verifi-
-car la correctitud de la implementación.
+	1. En primer lugar, deberán implementar un Read-Write Lock libre de inanición utilizando
+	únicamente semáforos POSIX y respetando la interfaz provista en los archivos backend-multi/RWLock.h
+	y backend-multi/RWLock.cpp. Esta implementación deberá tener tests que permitan verifi-
+	car la correctitud de la implementación.
 
-2. En segundo lugar, deberán implementar el servidor de backend multithreaded inspirándose
-en el código provisto y lo desarrollado en el punto anterior.
+	2. En segundo lugar, deberán implementar el servidor de backend multithreaded inspirándose
+	en el código provisto y lo desarrollado en el punto anterior.
 
 
 En la entrega se deberán adjuntar únicamente:
 
 
-El documento del informe (en PDF).
-El código fuente completo y con Makefiles del servidor de backend y los tests del Read-
-Write Lock.
+	El documento del informe (en PDF).
+	El código fuente completo y con Makefiles del servidor de backend y los tests del Read-
+	Write Lock.
 
 
 El informe deberá ser de caracter breve e incluir el seudocódigo de los algoritmos que se
