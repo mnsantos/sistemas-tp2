@@ -18,6 +18,8 @@ void *lector(void * p_miNumero){
 	pthread_mutex_lock(&nomepiso);
 	
 	// Esperar un valor aleatorio de ms.
+	usleep(2000); //4ms
+	//
 	
 	cout << "Lei: "<<variable_a_leer_escribir<<" y soy: "<<miNumero<<endl;
 	pthread_mutex_unlock(&nomepiso);
@@ -32,6 +34,8 @@ void *escritor(void * p_miNumero){
 	variable_a_leer_escribir++;
 	
 	// Esperar un valor aleatorio de ms.
+	usleep(2000); //4ms
+	//
 	
 	cout<<"Escribi: "<<variable_a_leer_escribir<<" y soy: "<<miNumero<<endl;
 	lock.wunlock();
