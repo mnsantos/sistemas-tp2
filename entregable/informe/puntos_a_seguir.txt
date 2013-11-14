@@ -1,0 +1,48 @@
+Entregable:
+
+Deberán entregar el trabajo antes del Lunes 18 de Noviembre a las 23:59 mediante el sistema
+de entrega http://so.exp.dc.uba.ar/
+
+
+El trabajo consta de dos apartados:
+
+
+1. En primer lugar, deberán implementar un Read-Write Lock libre de inanición utilizando
+únicamente semáforos POSIX y respetando la interfaz provista en los archivos backend-multi/RWLock.h
+y backend-multi/RWLock.cpp. Esta implementación deberá tener tests que permitan verifi-
+car la correctitud de la implementación.
+
+2. En segundo lugar, deberán implementar el servidor de backend multithreaded inspirándose
+en el código provisto y lo desarrollado en el punto anterior.
+
+
+En la entrega se deberán adjuntar únicamente:
+
+
+El documento del informe (en PDF).
+El código fuente completo y con Makefiles del servidor de backend y los tests del Read-
+Write Lock.
+
+
+El informe deberá ser de caracter breve e incluir el seudocódigo de los algoritmos que se
+ejecutan en el servidor de backend frente a cada petición de un cliente, poniendo énfasis en las
+primitivas de sincronización al estilo del primer parcial de la materia. Si fuera necesario, puede ser
+buena idea incluir una explicación del funcionamiento del servidor en lenguaje natural. Cualquier
+decisión de diseño que hayan tomado deberá ser incluida aquí.
+
+
+La implementación que realicen del servidor de backend debe estar libre de condiciones de
+carrera y presentar la funcionalidad descripta arriba a cada uno de los clientes. A su vez, debe:
+
+	-+	Permitir que múltiples clientes se conecten al backend de forma simultánea.
+	-+	Permitir que uno o varios controladores se conecten al backend en cualquier momento sin
+		importar el estado del juego y puedan obtener los puntajes de los jugadores con el comando
+		Get_Scores . No hace falta que puedan ejecutar otros comandos no implementados por los
+		programadores anteriores.
+	-+	Permitir que todos los jugadores realicen disparos sobre jugadores distintos de forma simul-
+		tánea.
+	-+	Permitir que varios jugadores consulten el estado del tablero de un mismo jugador de forma
+		simultánea.
+	-+	Finalizar correctamente liberando todos los recursos utilizados una vez que el juego termina.
+	-+	Al finalizar, deberá imprimir por salida estándar los puntajes finales del juego.
+
