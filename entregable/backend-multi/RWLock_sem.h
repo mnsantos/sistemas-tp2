@@ -16,11 +16,12 @@ class RWLock {
 		sem_t accessR;
 		sem_t accessW;
 		
-		sem_t mutex_r;	
+		sem_t mutex;	
 		int readers;
-
-		sem_t mutex_w;	
+		int readers_waiting;
+	
 		int writers;
+		int writers_waiting;
 };
 
 #endif

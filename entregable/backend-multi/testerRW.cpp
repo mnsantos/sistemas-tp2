@@ -15,12 +15,11 @@ void *lector(void * p_miNumero){
 	int miNumero = *((int *) p_miNumero);
 	lock.rlock();
 	
-	pthread_mutex_lock(&nomepiso);
-	
 	// Esperar un valor aleatorio de ms.
 	usleep(2000); //4ms
 	//
 	
+	pthread_mutex_lock(&nomepiso);
 	cout << "Lei: "<<variable_a_leer_escribir<<" y soy: "<<miNumero<<endl;
 	pthread_mutex_unlock(&nomepiso);
 	
@@ -77,54 +76,8 @@ int main(int argc, char **argv)
 		pthread_join(threadW[tid], NULL);
 	}
 
-	
-
 	//cout<<"termine"<<endl;
 	
 	return 0;
-	
-	
-	/*
-	for (int i = 0; i < cant_lectores; i++);
-		pid_t pid = fork();
-		if (pid == 0) {
-			lector();
-			break;
-		}
-    }
-    if (pìd != 0){	
-	
-		for (int i = 0; i < cant_escritores; i++){
-			pid_t pid = fork();
-			if (pid == 0) {
-				escritor();
-				break;
-			}
-		}	
-	}
-	
-	if (pìd != 0){	
-	
-	
-		//~ sincronizar
-		//~ for each
-		wait(&status);
-	
-	
-	
-	}else{
-		
-		//~ exit();
-	}
-	
-	
-	return 0;
-	*/
-	
-	/*	
-	for (tid = 0; tid < cant_lectores; ++tid){
-		pthread_join(threadR[tid], NULL);
-	}
-*/
 	
 }
