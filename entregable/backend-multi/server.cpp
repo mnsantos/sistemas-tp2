@@ -23,6 +23,9 @@
 #include <decodificador.h>
 #include <globales.h>
 
+//pthread
+#include <pthread.h>
+
 #define MAX_MSG_LENGTH 4096
 #define MAX_JUGADORES 100
 
