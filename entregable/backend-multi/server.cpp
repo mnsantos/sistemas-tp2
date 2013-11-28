@@ -173,9 +173,9 @@ void *accept_p(void* arg) {
 	bool sale = false;
 	while(!sale){
 		atender_jugador(jugador);
-		lock.rlock();
+	//	lock.rlock();
 		sale = model->termino();
-		lock.runlock();
+	//	lock.runlock();
 	}
 	
 	//pthread_exit(NULL);
