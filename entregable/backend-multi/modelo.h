@@ -28,7 +28,7 @@ class Modelo {
 		Evento	actualizar_jugador(int t_id);	/* devuelve el proximo evento del jugador */
         int     hayEventos(int s_id);
         Evento  dameEvento(int s_id);
-		EstadoJuego				jugando;						/* si se esta jugando (fase tiroteo) o ubicando */	
+		
 #ifdef DEBUG
 		void	print();
 #endif
@@ -38,7 +38,7 @@ class Modelo {
 		Jugador					**jugadores;					/* Jugadores */
 		Tiro					*tiros;							/* estado de los tiros */
 		std::queue<Evento>		*eventos;						/* arreglo de colas de eventos por jugador */
-		//~ EstadoJuego				jugando;						/* si se esta jugando (fase tiroteo) o ubicando */
+		EstadoJuego				jugando;						/* si se esta jugando (fase tiroteo) o ubicando */
 	
 		friend class	Jsonificador;					/* para poder acceder a los elementos */
 	

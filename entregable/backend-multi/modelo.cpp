@@ -115,6 +115,7 @@ error Modelo::ack(int s_id){
 }
 
 bool Modelo::termino() {
+	if(this->jugando == SETUP) return false;
     for(int i = 0; i < max_jugadores; i++){
         if(!this->jugadores[i]->termino())
             return false;

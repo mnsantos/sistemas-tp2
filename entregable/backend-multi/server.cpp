@@ -175,7 +175,7 @@ void *accept_p(void* arg) {
 	bool sale = false;
 	while(!sale){
 		atender_jugador(jugador);
-		if(model->jugando != SETUP) sale = model->termino();
+		sale = model->termino();
 	}
 	
 	/**while(!sale){
