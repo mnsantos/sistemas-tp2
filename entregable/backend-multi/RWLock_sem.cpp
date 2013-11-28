@@ -28,12 +28,12 @@ void RWLock :: rlock() {
 			sem_wait(&rw_lock);		//tomo el rw_lock
 			
 			//*debug*/
-			cout << "<*L ";
+			//~ cout << "<*L ";
 			//**/
 		}
 		readers++;					//sino me sumo al resto.
 		//*debug*/
-		cout << "<L ";
+		//~ cout << "<L ";
 		//**/
 		sem_post(&mutex);		//cedemos los mutex.
 		
@@ -45,12 +45,12 @@ void RWLock :: rlock() {
 		sem_post(&mutex);		
 									//importante pedir el mutex_r antes de ceder mutex_w
 		//*debug*/
-		cout << "*rh* ";
+		//~ cout << "*rh* ";
 		//**/
 		sem_wait(&accessR);			//esperamos el cambio de estado.
 									//cuando ganamos el acceso, writers deberia ser cero.
 		//*debug*/
-		cout << "*ruh* ";
+		//~ cout << "*ruh* ";
 		//**/
 		sem_wait(&mutex);
 		if (readers == 0){			//si soy el primero
@@ -58,7 +58,7 @@ void RWLock :: rlock() {
 		}
 		readers++;					//hacemos presencia		
 		//*debug*/
-		cout << "<L ";
+		//~ cout << "<L ";
 		//**/		
 		sem_post(&mutex);
 		
@@ -81,7 +81,7 @@ void RWLock :: wlock() {
 		sem_wait(&rw_lock); 		//esperamos nuestro turno, no hay escritura concurrente todos juntos, este semaforo deberia funcionar.		
 		
 		//*debug*/
-		cout << "<*E ";
+		//~ cout << "<*E ";
 		//**/
 		
 		///escritura.
@@ -91,12 +91,12 @@ void RWLock :: wlock() {
 		writers_waiting++;
 		sem_post(&mutex);
 		//*debug*/
-		cout << "*wh* ";
+		//~ cout << "*wh* ";
 		//**/
 		sem_wait(&accessW);			//pedimos acceso.
 									//con el acceso, no deberia haber lectores.
 		//*debug*/
-		cout << "*wuh* ";
+		//~ cout << "*wuh* ";
 		//**/
 		sem_wait(&mutex);
 		writers++;
@@ -106,7 +106,7 @@ void RWLock :: wlock() {
 		
 		///escritura.
 		//*debug*/
-		cout << "<*E ";
+		//~ cout << "<*E ";
 		//**/
 	}
 	
@@ -130,13 +130,13 @@ void RWLock :: runlock() {
 		}
 		//~ sem_post(&mutex_w);
 		//*debug*/
-		cout << "L*> ";
+		//~ cout << "L*> ";
 		//**/		
 		sem_post(&rw_lock);		//cedemos el lock.
 
 	}
 	//*debug*/
-	cout << "L> ";
+	//~ cout << "L> ";
 	//**/	
 	
 	sem_post(&mutex);
@@ -158,7 +158,7 @@ void RWLock :: wunlock() {
 		}
 	}	
 	//*debug*/
-	cout << "E*> ";
+	//~ cout << "E*> ";
 	//**/
 	
 	sem_post(&rw_lock);
