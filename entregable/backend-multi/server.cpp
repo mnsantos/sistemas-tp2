@@ -25,6 +25,8 @@
 
 //pthread
 #include <pthread.h>
+//rwlock
+#include "RWLock_sem.h"
 
 #define MAX_MSG_LENGTH 4096
 #define MAX_JUGADORES 100
@@ -46,7 +48,11 @@ char buf[MAX_MSG_LENGTH];			// Buffer de recepción de mensajes
 int s[MAX_JUGADORES];				// Sockets de los jugadores
 int ids[MAX_JUGADORES];				// Ids de los jugadores
 Modelo * model = NULL;				// Puntero al modelo del juego
-Decodificador *decoder  = NULL;		// Puntero al decodificador
+Decodificador *decoders[MAX_JUGADORES];		// Puntero al decodificador				
+
+			/** un deco por thread? */
+Decodificador *deco_controlador = NULL;
+/** un deco por cada controlador? */
 int n, tamanio, tamanio_barcos;		// Variables de configuracion del juego.
 
 
@@ -55,35 +61,48 @@ void reset() {
 	if (model != NULL) {
 		delete model;
 	}
-	if (decoder != NULL) {
-		delete decoder;
-	}
+	
 	model = new Modelo(n, tamanio, tamanio_barcos);
-	decoder = new Decodificador(model);
+
+	if (deco_controlador != NULL) {
+		delete deco_controlador;
+	}	
+	deco_controlador = new Decodificador(model);
+	for(int i = 0; i < n; i++){
+		if (decoders[i] != NULL) {
+			delete decoders[i];
+		}
+		decoders[i] = new Decodificador(model);
+	}
 }
 
 /* Acepta todas las conexiones entrantes */
 
-void accept() {
+void *accept_p(void* arg) {
 	int t;
-	for (int i = 0; i < n; i++) {
-		t = sizeof(remote);
-		if ((s[i] = accept(sock, (struct sockaddr*) &remote, (socklen_t*) &t)) == -1) {
-			perror("aceptando la conexión entrante");
-			exit(1);
-		}
-		ids[i] = -1;
-		int flag = 1;
-		setsockopt(s[i],            /* socket affected */
-				IPPROTO_TCP,     /* set option at TCP level */
-				TCP_NODELAY,     /* name of option */
-				(char *) &flag,  /* the cast is historical */
-				sizeof(int));    /* length of option value */
+	int jugador = *((int *) arg);
+	
+	t = sizeof(remote);
+	if ((s[jugador] = accept(sock, (struct sockaddr*) &remote, (socklen_t*) &t)) == -1) {
+		perror("aceptando la conexión entrante");
+		exit(1);
 	}
+	ids[jugador] = -1;
+	int flag = 1;
+	setsockopt(s[jugador],            /* socket affected */
+			IPPROTO_TCP,     /* set option at TCP level */
+			TCP_NODELAY,     /* name of option */
+			(char *) &flag,  /* the cast is historical */
+			sizeof(int));    /* length of option value */
+	
+	//se quede atendiendolo
+	
+	pthread_exit(NULL);
+	return NULL;
 }
 
 
-/* Socket de comunicación del controlador */
+/* Socket de comunicación de *//**los controladores */
 int s_controlador;
 /* Para anteder al controlador */
 void atender_controlador() {
@@ -97,7 +116,7 @@ void atender_controlador() {
 		char * pch = strtok(buf, "|");
 		while (pch != NULL) {
 			//Ejecutar y responder
-			resp = decoder->decodificar(pch);
+			resp = deco_controlador->decodificar(pch);
 			send(s_controlador,resp.c_str(), resp.length() +1, 0);
 		}
 	}
@@ -124,11 +143,11 @@ void atender_jugador(int i) {
 			}
 			
 			//Decodifico el mensaje y obtengo una respuesta
-			resp = decoder->decodificar(pch);
+			resp = decoders[i]->decodificar(pch);
 			
 			// Si no se cual es el ID de este jugador, trato de obtenerlo de la respuesta
 			if (ids[i] == -1) {
-				ids[i] = decoder->dameIdJugador(resp.c_str());
+				ids[i] = decoders[i]->dameIdJugador(resp.c_str());
 			}
 			
 			// Envio la respuesta
@@ -144,7 +163,7 @@ void atender_jugador(int i) {
 				// Busco si hay eventos para enviar y los mando
 				bool hayEventos = model->hayEventos(ids[i]);
 				while(hayEventos) {
-					resp = decoder->encodeEvent(ids[i]);
+					resp = decoders[i]->encodeEvent(ids[i]);
 					printf("Enviando evento %s", resp.c_str());
 					send(s[i],resp.c_str(), resp.length() +1, 0);
 					hayEventos = model->hayEventos(ids[i]);
@@ -176,6 +195,7 @@ int main(int argc, char * argv[]) {
 	inicializar();
 	int port_controlador = CONTROLLER_PORT;
 	
+	for(int r = 0; r < MAX_JUGADORES; r++) decoders[r] = NULL;
 	
 	printf("Escuchando en el puerto %d - controlador en %d\n", port, port_controlador);
 	printf("Jugadores %d - Tamanio %d - Tamanio Barcos %d\n", n, tamanio, tamanio_barcos);
@@ -203,8 +223,11 @@ int main(int argc, char * argv[]) {
 		perror("escuchando");
 		exit(1);
 	}
-
-	accept();
+	
+	pthread_t threads[MAX_JUGADORES];
+	for(int i = 0; i < n; i++){
+		pthread_create(&threads[i],NULL,accept_p,&i);
+	}
 	
 	
 	printf("Corriendo...\n");
@@ -225,6 +248,7 @@ int main(int argc, char * argv[]) {
 		}
 		sale = model->termino();
 	}
+	
     printf("Termino el juego, cerrando\n");
 	for (int i = 0; i < n; i++) {
 		close(s[i]);
