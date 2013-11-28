@@ -97,7 +97,7 @@ void *accept_p(void* arg) {
 	
 	//se quede atendiendolo
 	
-	pthread_exit(NULL);
+	//pthread_exit(NULL);
 	return NULL;
 }
 
@@ -224,12 +224,14 @@ int main(int argc, char * argv[]) {
 		exit(1);
 	}
 	
-	pthread_t threads[MAX_JUGADORES];
-	for(int i = 0; i < n; i++){
-		pthread_create(&threads[i],NULL,accept_p,&i);
+	pthread_t threads[MAX_JUGADORES]; int tids[MAX_JUGADORES];
+	for(int tid = 0; tid < n; ++tid){
+		tids[tid] = tid;
+		pthread_create(&threads[tid],NULL,accept_p,&tids[tid]);
 	}
-	for (tid = 0; tid < n; ++tid)
+	for (int tid = 0; tid < n; ++tid){
 		pthread_join(threads[tid], NULL);
+	}
 
 	
 	printf("Corriendo...\n");
