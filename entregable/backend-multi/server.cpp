@@ -53,7 +53,7 @@ Decodificador *decoders[MAX_JUGADORES];		// Puntero al decodificador
 			/** un deco por thread? */
 Decodificador *deco_controlador = NULL;
 /** un deco por cada controlador? */
-RWLock lock;
+//~ RWLock lock;
 
 int n, tamanio, tamanio_barcos;		// Variables de configuracion del juego.
 

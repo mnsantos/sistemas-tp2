@@ -41,7 +41,13 @@ class Modelo {
 		EstadoJuego				jugando;						/* si se esta jugando (fase tiroteo) o ubicando */
 	
 		friend class	Jsonificador;					/* para poder acceder a los elementos */
-	
+		
+		/** ACA VAN LOS LOCKS; HAY QUE PROTEGER EL MODELO Y TENER CUIDADO CON EL JSONIFICADOR QUE ES FRIEND 
+		 * 
+		 * RWLock lock1,lock2...
+		 * */
+		
+		
 };
 
 
