@@ -172,12 +172,17 @@ void *accept_p(void* arg) {
 	//se quede atendiendolo
 	bool sale = false;
 	while(!sale){
-		atender_jugador(jugador);
-	//	lock.rlock();
+		fd_set readfds;
+		FD_ZERO(&readfds);
+		FD_SET(s[jugador], &readfds);
+		select(s[n-1]+1, &readfds, NULL, NULL, NULL);	
+		if (FD_ISSET(s[i], &readfds)){	
+			atender_jugador(jugador);
+		}
+		lock.rlock();
 		sale = model->termino();
-	//	lock.runlock();
+		lock.runlock();
 	}
-	
 	//pthread_exit(NULL);
 	return NULL;
 }
