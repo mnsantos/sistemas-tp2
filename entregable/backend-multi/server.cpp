@@ -228,7 +228,9 @@ int main(int argc, char * argv[]) {
 	for(int i = 0; i < n; i++){
 		pthread_create(&threads[i],NULL,accept_p,&i);
 	}
-	
+	for (tid = 0; tid < n; ++tid)
+		pthread_join(threads[tid], NULL);
+
 	
 	printf("Corriendo...\n");
 	
