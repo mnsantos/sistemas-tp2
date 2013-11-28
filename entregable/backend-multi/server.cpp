@@ -44,7 +44,7 @@ int no_bloqueante(int fd) {
 /* Variables globales del server */
 int sock;							// Socket donde se escuchan las conexiones entrantes
 struct sockaddr_in name, remote;	// Direcciones
-char buf[MAX_MSG_LENGTH];			// Buffer de recepción de mensajes
+//char buf[MAX_MSG_LENGTH];			// Buffer de recepción de mensajes
 int s[MAX_JUGADORES];				// Sockets de los jugadores
 int ids[MAX_JUGADORES];				// Ids de los jugadores
 Modelo * model = NULL;				// Puntero al modelo del juego
@@ -82,6 +82,7 @@ void reset() {
 int s_controlador;
 /* Para anteder al controlador */
 void atender_controlador() {
+	char buf[MAX_MSG_LENGTH];
 	int recibido;
 	std::string resp;
 	recibido = recv(s_controlador, buf, MAX_MSG_LENGTH, 0);
@@ -101,6 +102,7 @@ void atender_controlador() {
 
 /* Para atender al i-esimo jugador */
 void atender_jugador(int i) {
+	char buf[MAX_MSG_LENGTH];
 	int recibido;
 	std::string resp;
 	recibido = recv(s[i], buf, MAX_MSG_LENGTH, 0);
@@ -161,7 +163,7 @@ void *accept_p(void* arg) {
 		perror("aceptando la conexión entrante");
 		exit(1);
 	}
-	ids[jugador] = -1;
+//	ids[jugador] = -1;
 	int flag = 1;
 	setsockopt(s[jugador],            /* socket affected */
 			IPPROTO_TCP,     /* set option at TCP level */
@@ -173,7 +175,7 @@ void *accept_p(void* arg) {
 	bool sale = false;
 	while(!sale){
 		atender_jugador(jugador);
-		sale = model->termino();
+		if(model->jugando != SETUP) sale = model->termino();
 	}
 	
 	/**while(!sale){
@@ -240,6 +242,10 @@ int main(int argc, char * argv[]) {
 	if (listen(sock, n) == -1) {
 		perror("escuchando");
 		exit(1);
+	}
+	
+	for (int i=0; i<n; ++i){
+		ids[i] = -1;
 	}
 	
 	pthread_t threads[MAX_JUGADORES]; int tids[MAX_JUGADORES];
