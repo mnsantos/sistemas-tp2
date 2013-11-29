@@ -30,7 +30,7 @@
 
 #define MAX_MSG_LENGTH 4096
 #define MAX_JUGADORES 100
-#define MAX_CONTROLADORES 10
+#define MAX_CONTROLADORES 1
 
 /* Setea un socket como no bloqueante */
 int no_bloqueante(int fd) {
@@ -359,6 +359,7 @@ int main(int argc, char * argv[]) {
 	*/
 	
     printf("Termino el juego, cerrando\n");
+    
 	for (int i = 0; i < n; i++) {
 		close(s[i]);
 	}

@@ -103,6 +103,9 @@ error Modelo::finalizar() {
 		}
 	}
 	this->jugando = FINALIZADO;
+	
+	//															aca habria que imprimir los scores de cada jugador.
+	
 	return ERROR_NO_ERROR;
 }
 
