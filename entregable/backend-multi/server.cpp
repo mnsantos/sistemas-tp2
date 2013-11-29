@@ -99,6 +99,7 @@ void atender_controlador(int i) {
 			//Ejecutar y responder
 			resp = deco_controladores[i]->decodificar(pch);
 			send(s_controladores[i],resp.c_str(), resp.length() +1, 0);
+			pch = strtok(NULL, "|");
 		}
 	}
 }
@@ -333,7 +334,7 @@ int main(int argc, char * argv[]) {
 		pthread_join(threads[tid], NULL);
 	}
 	
-	for (int tid = 0; tid < n; ++tid){
+	for (int tid = 0; tid < MAX_CONTROLADORES; ++tid){
 		pthread_join(control_threads[tid], NULL);
 	}
 	
