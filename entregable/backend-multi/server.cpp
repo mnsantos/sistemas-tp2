@@ -305,7 +305,7 @@ int main(int argc, char * argv[]) {
 		exit(1);
 	}
 	
-	/* Escuchar en el socket y permitir n conexiones en espera. */
+	/* Escuchar en el socket y permitir MAX_CONTROLADORES conexiones en espera. */
 	if (listen(c_sock, MAX_CONTROLADORES) == -1) {
 		perror("escuchando");
 		exit(1);
@@ -369,5 +369,6 @@ int main(int argc, char * argv[]) {
 	}
 
 	close(sock);
+	close(c_sock);
 	return 0;
 }
