@@ -37,7 +37,7 @@ Modelo::~Modelo() {
 /** Registra un nuevo jugador en la partida */
 int Modelo::agregarJugador(std::string nombre) {
 	if (this->jugando != SETUP) return -ERROR_JUEGO_EN_PROGRESO;
-	int nuevoid = 0;
+	int nuevoid = 0; 
 	for (nuevoid = 0; nuevoid < max_jugadores && this->jugadores[nuevoid] != NULL; nuevoid++);
 	
 	if (this->jugadores[nuevoid] != NULL) return -ERROR_MAX_JUGADORES;

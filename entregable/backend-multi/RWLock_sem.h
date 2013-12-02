@@ -2,10 +2,12 @@
 #define RWLock_h
 #include <iostream>
 #include <semaphore.h>
+#include <assert.h>
 
 class RWLock {
     public:
         RWLock();
+        ~RWLock();
         void rlock();
         void wlock();
         void runlock();

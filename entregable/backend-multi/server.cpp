@@ -25,8 +25,6 @@
 
 //pthread
 #include <pthread.h>
-//rwlock
-#include "RWLock_sem.h"
 
 #define MAX_MSG_LENGTH 4096
 #define MAX_JUGADORES 100
@@ -337,27 +335,6 @@ int main(int argc, char * argv[]) {
 	for (int tid = 0; tid < MAX_CONTROLADORES; ++tid){
 		pthread_join(control_threads[tid], NULL);
 	}
-	
-	/*
-	printf("Corriendo...\n");
-	
-	bool sale = false;
-	while (!sale) {
-		fd_set readfds;
-		FD_ZERO(&readfds);
-		for (int i = 0; i < n; i++) {
-			FD_SET(s[i], &readfds);
-		}
-		select(s[n-1]+1, &readfds, NULL, NULL, NULL);
-		
-		for (int i = 0; i < n; i++) {
-			if (FD_ISSET(s[i], &readfds)) {
-				atender_jugador(i);
-			}
-		}
-		sale = model->termino();
-	}
-	*/
 	
     printf("Termino el juego, cerrando\n");
     

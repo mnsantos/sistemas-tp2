@@ -6,6 +6,8 @@
 #include <evento.h>
 #include <tiro.h>
 #include <queue>
+//rwlock
+#include "RWLock_sem.h"
 
 enum EstadoJuego {SETUP, DISPAROS, FINALIZADO};
 
@@ -45,8 +47,8 @@ class Modelo {
 		/** ACA VAN LOS LOCKS; HAY QUE PROTEGER EL MODELO Y TENER CUIDADO CON EL JSONIFICADOR QUE ES FRIEND 
 		 * 
 		 * RWLock lock1,lock2...
-		 * */
-		
+		*/
+		RWLock *lock_jugando;
 		
 };
 

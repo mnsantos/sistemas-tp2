@@ -15,6 +15,13 @@ RWLock :: RWLock() {
 	writers_waiting = 0;
 }
 
+RWLock :: ~RWLock() {
+	sem_close(&rw_lock);
+	sem_close(&accessR);
+	sem_close(&accessW);
+	sem_close(&mutex);
+}
+
 void RWLock :: rlock() {
 
 	sem_wait(&mutex);				//pedimos mutex_r para evitar deadlock.
@@ -35,8 +42,11 @@ void RWLock :: rlock() {
 		//*debug*/
 		//~ cout << "<L ";
 		//**/
-		sem_post(&mutex);		//cedemos los mutex.
 		
+		assert(writers == 0);
+		assert(readers > 0);
+		sem_post(&mutex);		//cedemos los mutex.
+
 		///lectura.
 		
 	}else{							//hay escritores => ESTADO ESCRITURA
@@ -60,6 +70,8 @@ void RWLock :: rlock() {
 		//*debug*/
 		//~ cout << "<L ";
 		//**/		
+		assert(writers == 0);
+		assert(readers > 0);
 		sem_post(&mutex);
 		
 		///lectura.
@@ -83,7 +95,7 @@ void RWLock :: wlock() {
 		//*debug*/
 		//~ cout << "<*E ";
 		//**/
-		
+		assert(readers == 0);
 		///escritura.
 		
 	}else{
@@ -104,6 +116,7 @@ void RWLock :: wlock() {
 		
 		sem_wait(&rw_lock);		//tomo el rw_lock
 		
+		assert(readers == 0);
 		///escritura.
 		//*debug*/
 		//~ cout << "<*E ";
