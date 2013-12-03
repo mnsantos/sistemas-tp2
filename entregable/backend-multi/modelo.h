@@ -48,6 +48,11 @@ class Modelo {
 		 * 
 		 * RWLock lock1,lock2...
 		*/
+		//~ RWLock *lock_cant_jugadores;
+		//~ RWLock *lock_jugadores_listos;
+		RWLock *lock_jugadores;
+		RWLock *lock_nuevo_jugador;
+		RWLock *lock_eventos;
 		RWLock *lock_jugando;
 		
 };

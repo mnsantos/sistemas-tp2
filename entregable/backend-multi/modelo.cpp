@@ -22,6 +22,18 @@ Modelo::Modelo(int njugadores, int tamtablero, int tamtotalbarcos){
 	this->jugadores_listos = 0;
 	this->jugando = SETUP;
 
+	//~ lock_cant_jugadores = new RWLock();
+	//~ lock_jugadores_listos = new RWLock();
+	lock_jugadores = new RWLock[max_jugadores];
+	//~ lock_tiros = new RWLock();
+	lock_eventos = new RWLock[max_jugadores];
+	lock_jugando = new RWLock();
+	lock_nuevo_jugador = new RWLock();
+	for (int i = 0; i < max_jugadores; i++) {
+		lock_jugadores[i] = RWLock();
+		lock_eventos[i] = RWLock();
+	}
+
 }
 Modelo::~Modelo() {
 	for (int i = 0; i < max_jugadores; i++) {
@@ -32,19 +44,46 @@ Modelo::~Modelo() {
 	delete[] this->jugadores;
 	delete[] this->tiros;
 	delete[] this->eventos;
+	
+	//~ delete lock_cant_jugadores;
+	//~ delete lock_jugadores_listos;
+	//~ delete lock_tiros;
+	//~ for (int i = 0; i < max_jugadores; i++) {
+		//~ delete lock_jugadores[i]
+		//~ delete lock_eventos[i]
+	//~ }
+	delete[] lock_jugadores;
+	delete[] lock_eventos;
+	delete lock_jugando;
+	delete lock_nuevo_jugador;
 }
 
 /** Registra un nuevo jugador en la partida */
 int Modelo::agregarJugador(std::string nombre) {
+	
+	lock_jugando->rlock();
+	
 	if (this->jugando != SETUP) return -ERROR_JUEGO_EN_PROGRESO;
+	
+	//~ lock_jugando->runlock(); //debo liberarlo ya? NO
+	
 	int nuevoid = 0; 
+	
+	lock_nuevo_jugador.wlock(); //como no hay funcion que cambie el lock de lectura a escritura pido wlock directamente
+	
 	for (nuevoid = 0; nuevoid < max_jugadores && this->jugadores[nuevoid] != NULL; nuevoid++);
 	
 	if (this->jugadores[nuevoid] != NULL) return -ERROR_MAX_JUGADORES;
 	
 	this->jugadores[nuevoid] = new Jugador(nombre);
+	
+	//~ lock_jugadores.wunlock();
+	//~ lock_cant_jugadores.wlock();
+	
 	this->cantidad_jugadores++;
 	
+	lock_nuevo_jugador.wunlock();
+	lock_jugando->runlock();
 	return nuevoid;
 }
 
@@ -53,20 +92,33 @@ int Modelo::agregarJugador(std::string nombre) {
 	Sino quita todos los barcos del usuario.
 */
 error Modelo::ubicar(int t_id, int * xs, int *  ys, int tamanio) {
+	lock_jugando->rlock();
+	
 	if (this->jugando != SETUP) return -ERROR_JUEGO_EN_PROGRESO;
+	
+	
+	lock_jugadores[t_id].wlock();
+	
 	if (this->jugadores[t_id] == NULL) return -ERROR_JUGADOR_INEXISTENTE;
-	int retorno = this->jugadores[t_id]->ubicar(xs, ys, tamanio);
+	
+	
+	
+	int retorno = this->jugadores[t_id]->ubicar(xs, ys, tamanio); //cada thread maneja su tablero
 	if (retorno != ERROR_NO_ERROR){
 		this->borrar_barcos(t_id);
 	}
 	//Si el jugador esta listo
+	
+	
 	if (retorno == ERROR_NO_ERROR && this->jugadores[t_id]->listo()) {
 		this->jugadores_listos++;
 		//Si ya estan listos todos los jugadores
 		if(this->jugadores_listos == max_jugadores) {
-			this->empezar();
+			this->_empezar();
 		}
 	}
+	lock_jugadores[t_id].wunlock();
+	lock_jugando->runlock();
 	return retorno;
 }
 
@@ -77,17 +129,29 @@ error Modelo::borrar_barcos(int t_id) {
 	return this->jugadores[t_id]->quitar_barcos();
 }
 
+error Modelo::_empezar() {
+
+}
+
 /** Comienza la fase de tiros
 */
 error Modelo::empezar() {
+	lock_jugando->rlock();
 	if (this->jugando != SETUP) return -ERROR_JUEGO_EN_PROGRESO;
+	
 	for (int i = 0; i < max_jugadores; i++) {
+		//rlock jugadores?
 		if (this->jugadores[i] != NULL) {
 			Evento evento(0, i, 0, 0, EVENTO_START);
+			lock_eventos.wlock();
 			this->eventos[i].push(evento);
+			lock_eventos.wunlock();
 		}
 	}
+	lock_jugando->wlock();
 	this->jugando = DISPAROS;
+	lock_jugando->wunlock();
+	lock_jugando->runlock();
 	return ERROR_NO_ERROR;
 	
 }
@@ -95,17 +159,24 @@ error Modelo::empezar() {
 	Se marca el juego como terminado y se le notifica a todos los participantes */
 error Modelo::finalizar() {
 	//Enviar un evento a todos avisando que termino.
+	lock_jugando->wlock()
 	if (this->jugando != DISPAROS) return -ERROR_JUEGO_NO_COMENZADO;
+	
 	for (int i = 0; i < max_jugadores; i++) {
 		if (this->jugadores[i] != NULL) {
 			Evento evento(0, i, 0, 0, EVENTO_END);
+			lock_eventos.wlock();						//overhead, teniendo el wlock de jugando deberia poder tener este lock
 			this->eventos[i].push(evento);
+			lock_eventos.wunlock();
 		}
 	}
+
 	this->jugando = FINALIZADO;
-	
+
 	//															aca habria que imprimir los scores de cada jugador.
 	
+	
+	lock_jugando->wunlock();
 	return ERROR_NO_ERROR;
 }
 
@@ -114,40 +185,54 @@ error Modelo::finalizar() {
 	de cada jugador de que sabe que terminamos de jugar. */
 error Modelo::ack(int s_id){
 	//Guardarme en cada jugador que termino de jugar.
-	return this->jugadores[s_id]->ack();
+	lock_jugadores[s_id].rlock();
+	error e = this->jugadores[s_id]->ack()
+	lock_jugadores[s_id].runlock();
+	return e;
 }
 
 bool Modelo::termino() {
-	if(this->jugando == SETUP) return false;
-    for(int i = 0; i < max_jugadores; i++){
+	bool res = true;
+	lock_jugando->rlock();
+	if(this->jugando == SETUP) res = false;
+    for(int i = 0; i < max_jugadores && res; i++){
+		lock_jugadores[i].rlock();
         if(!this->jugadores[i]->termino())
-            return false;
+            res = false;
+        lock_jugadores[i].runlock();
     }
-    return true;
+    lock_jugando->runlock();
+    return res;
 }
 
 /** @Deprecated */
 error Modelo::reiniciar() {
 	for (int i = 0; i < max_jugadores; i++) {
+		lock_jugadores[i].wlock();
 		if (this->jugadores[i] != NULL) {
 			this->jugadores[i]->reiniciar();
 			this->tiros[i].reiniciar();
 		}
+		lock_jugadores[i].wunlock();
 	}
+	lock_jugando->wlock();
 	this->jugando = SETUP;
-	
+	lock_jugando->wunlock();	
 	return ERROR_NO_ERROR;
 	
 }
 
 /** Desuscribir a un jugador del juego */
 error Modelo::quitarJugador(int s_id) {
+	lock_jugando->rlock();
+	lock_jugadores[s_id].wlock();
 	if (this->jugando != SETUP) return -ERROR_JUEGO_EN_PROGRESO;
 	if (this->jugadores[s_id] == NULL) return -ERROR_JUGADOR_INEXISTENTE;
 	delete this->jugadores[s_id];
 	
 	this->jugadores[s_id] = NULL;
-	
+	lock_jugadores[s_id].wunlock();
+	lock_jugando->runlock();
 	return ERROR_NO_ERROR;
 }
 
@@ -175,19 +260,40 @@ int Modelo::apuntar(int s_id, int t_id, int x, int y, int *eta) {
 
 /** Obtener un update de cuanto tiempo debo esperar para que se concrete el tiro */
 int Modelo::dame_eta(int s_id) {
-	if (this->jugando != DISPAROS) return -ERROR_JUEGO_NO_COMENZADO;
-	if (this->jugadores[s_id] == NULL) return -ERROR_JUGADOR_INEXISTENTE;
-	return this->tiros[s_id].getEta();
+	int res;
+	lock_jugando->rlock();
+	if (this->jugando != DISPAROS){
+		lock_jugando->runlock();
+		return -ERROR_JUEGO_NO_COMENZADO;
+	}else{
+		lock_jugadores[s_id].rlock();
+		if (this->jugadores[s_id] == NULL){
+			lock_jugadores[s_id].runlock();
+			lock_jugando->runlock();
+			return -ERROR_JUGADOR_INEXISTENTE;
+		}else{
+			res = this->tiros[s_id].getEta();
+			lock_jugadores[s_id].runlock();
+			lock_jugando->runlock();		
+		}
+	}	
+	return res;
 }
 
 /** Concretar el tiro efectivamente, solo tiene exito si ya trascurrió el eta.
 	y e impacta con algo.*/
 int Modelo::tocar(int s_id, int t_id) {
+	
+	lock_jugando->wlock();
 	if (this->jugando != DISPAROS) return -ERROR_JUEGO_NO_COMENZADO;
+
+	lock_jugadores[s_id].wlock();
+	lock_jugadores[t_id].wlock();
 	if (this->jugadores[s_id] == NULL) return -ERROR_JUGADOR_INEXISTENTE;
 	if (this->jugadores[t_id] == NULL) return -ERROR_JUGADOR_INEXISTENTE;
-
 	
+	lock_eventos[s_id].wlock();
+	lock_eventos[t_id].wlock();
 	int retorno = -ERROR_ETA_NO_TRANSCURRIDO;
 	if (this->tiros[s_id].es_posible_tocar()) {
 		int x = this->tiros[s_id].x;
@@ -225,6 +331,11 @@ int Modelo::tocar(int s_id, int t_id) {
 			this->jugadores[s_id]->agregar_puntaje(PUNTAJE_MAGALLANES);
 		} 
 	}
+	lock_eventos[t_id].wunlock();
+	lock_eventos[s_id].wunlock();
+	lock_jugadores[t_id].wunlock();
+	lock_jugadores[s_id].wunlock();
+	lock_jugando->wunlock();
 	return retorno;
 }
 
@@ -245,11 +356,15 @@ void Modelo::print() {
 
 /******* RUTINAS DE EVENTOS  *************/
 int Modelo::hayEventos(int s_id) {
-	return this->eventos[s_id].size() > 0;
+	lock_eventos.rlock();
+	int res = this->eventos[s_id].size() > 0;
+	lock_eventos.runlock();
+	return res;
 }
 
 Evento Modelo::dameEvento(int s_id) {
 	assert(this->hayEventos(s_id));
+	
 	Evento retorno = this->eventos[s_id].front();
 	this->eventos[s_id].pop();
     return retorno;

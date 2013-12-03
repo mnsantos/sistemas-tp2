@@ -28,7 +28,7 @@
 
 #define MAX_MSG_LENGTH 4096
 #define MAX_JUGADORES 100
-#define MAX_CONTROLADORES 1
+#define MAX_CONTROLADORES 100
 
 /* Setea un socket como no bloqueante */
 int no_bloqueante(int fd) {
@@ -157,22 +157,9 @@ void atender_jugador(int i) {
 
 /* Acepta todas las conexiones entrantes */
 
-void *accept_p(void* arg) {
-	int t;
+void *atencion_p(void* arg) {
+
 	int jugador = *((int *) arg);
-	
-	t = sizeof(remote);
-	if ((s[jugador] = accept(sock, (struct sockaddr*) &remote, (socklen_t*) &t)) == -1) {
-		perror("aceptando la conexión entrante");
-		exit(1);
-	}
-	ids[jugador] = -1;
-	int flag = 1;
-	setsockopt(s[jugador],            /* socket affected */
-			IPPROTO_TCP,     /* set option at TCP level */
-			TCP_NODELAY,     /* name of option */
-			(char *) &flag,  /* the cast is historical */
-			sizeof(int));    /* length of option value */
 	
 	//se quede atendiendolo
 	bool sale = false;
@@ -181,61 +168,40 @@ void *accept_p(void* arg) {
 		sale = model->termino();
 	}
 	
-	/**while(!sale){
-		fd_set readfds;
-		FD_ZERO(&readfds);
-		FD_SET(s[jugador], &readfds);
-		select(s[n-1]+1, &readfds, NULL, NULL, NULL);	
-		if (FD_ISSET(s[jugador], &readfds)){	
-			atender_jugador(jugador);
-		}
-		lock.rlock();
-		sale = model->termino();
-		lock.runlock();
-	}*/
-	
 	//pthread_exit(NULL);
 	return NULL;
 }
+void *accept_c() {
+	int t;
+	
+	for(int controlador = 0; controlador < MAX_CONTROLADORES; ++controlador){
+		c_tids[controlador] = controlador;
+		t = sizeof(c_remote);
+		if ((s_controladores[controlador] = accept(c_sock, (struct sockaddr*) &c_remote, (socklen_t*) &t)) == -1) {
+			perror("aceptando la conexión entrante");
+			exit(1);
+		}	
+		int flag = 1;
+		setsockopt(s_controladores[controlador],            /* socket affected */
+				IPPROTO_TCP,     							/* set option at TCP level */
+				TCP_NODELAY,								/* name of option */
+				(char *) &flag,  							/* the cast is historical */
+				sizeof(int));    							/* length of option value */		
+		
+		pthread_create(&control_threads[tid],NULL,atencion_c,&c_tids[tid]);
+	}
 
-void *accept_c(void* arg) {
+	//lanza un thread por cada conexion entrante.
+	return NULL;
+}
+void *atencion_c(void* arg) {
 	int t;
 	int controlador = *((int *) arg);
 	
-	t = sizeof(c_remote);
-	if ((s_controladores[controlador] = accept(c_sock, (struct sockaddr*) &c_remote, (socklen_t*) &t)) == -1) {
-		perror("aceptando la conexión entrante");
-		exit(1);
-	}
-	//~ ids[jugador] = -1;
-	int flag = 1;
-	setsockopt(s_controladores[controlador],            /* socket affected */
-			IPPROTO_TCP,     							/* set option at TCP level */
-			TCP_NODELAY,								/* name of option */
-			(char *) &flag,  							/* the cast is historical */
-			sizeof(int));    							/* length of option value */
+	atender_controlador(controlador);
 	
-	//se queda atendiendolo
-	bool sale = false;
-	while(!sale){
-		atender_controlador(controlador);
-		sale = model->termino();
-	}
-	
-	/**while(!sale){
-		fd_set readfds;
-		FD_ZERO(&readfds);
-		FD_SET(s[jugador], &readfds);
-		select(s[n-1]+1, &readfds, NULL, NULL, NULL);	
-		if (FD_ISSET(s[jugador], &readfds)){	
-			atender_jugador(jugador);
-		}
-		lock.rlock();
-		sale = model->termino();
-		lock.runlock();
-	}*/
-	
-	//pthread_exit(NULL);
+	close(s_controladores[controlador]);
+	//~ pthread_exit(NULL);
 	return NULL;
 }
 
@@ -309,30 +275,48 @@ int main(int argc, char * argv[]) {
 		perror("escuchando");
 		exit(1);
 	}
-	
-	//~ for (int i=0; i<n; ++i){
-		//~ ids[i] = -1;
-	//~ }
-	
-	pthread_t threads[MAX_JUGADORES]; int tids[MAX_JUGADORES];
-	for(int tid = 0; tid < n; ++tid){
-		tids[tid] = tid;
-		pthread_create(&threads[tid],NULL,accept_p,&tids[tid]);
+
+	pthread_t control_threads[MAX_CONTROLADORES]; 
+	int c_tids[MAX_CONTROLADORES];
+	for(int i = 0; i < MAX_CONTROLADORES; ++i){
+		c_tids[i] = -1;
 	}
 	
-	pthread_t control_threads[MAX_CONTROLADORES]; int c_tids[MAX_CONTROLADORES];
-	for(int tid = 0; tid < n; ++tid){
-		c_tids[tid] = tid;
-		pthread_create(&control_threads[tid],NULL,accept_c,&c_tids[tid]);
+	pthread_t thread_atencion_controladores;
+	pthread_create(&thread_atencion_controladores,NULL,accept_c,NULL);
+	
+	pthread_t threads[MAX_JUGADORES]; 
+	int tids[MAX_JUGADORES];
+	
+	//~ for(int tid = 0; tid < n; ++tid){
+		//~ tids[tid] = tid;
+		//~ pthread_create(&threads[tid],NULL,accept_p,&tids[tid]);
+	//~ } 
+		
+	int t;	
+	for (int jugador = 0; jugador < n; ++jugador){
+		t = sizeof(remote);
+		if ((s[jugador] = accept(sock, (struct sockaddr*) &remote, (socklen_t*) &t)) == -1) {
+			perror("aceptando la conexión entrante");
+			exit(1);
+		}
+		ids[jugador] = -1;
+		int flag = 1;
+		setsockopt(s[jugador],            /* socket affected */
+				IPPROTO_TCP,     /* set option at TCP level */
+				TCP_NODELAY,     /* name of option */
+				(char *) &flag,  /* the cast is historical */
+				sizeof(int));    /* length of option value */
+		
+		tids[jugador] = jugador;	
+		pthread_create(&threads[jugador],NULL,atencion_p,&tids[jugador]);
 	}
-	
-	
-	
+		
 	for (int tid = 0; tid < n; ++tid){
 		pthread_join(threads[tid], NULL);
 	}
 	
-	for (int tid = 0; tid < MAX_CONTROLADORES; ++tid){
+	for (int tid = 0; tid < MAX_CONTROLADORES && c_tids[tid] != -1; ++tid){
 		pthread_join(control_threads[tid], NULL);
 	}
 	
@@ -342,10 +326,6 @@ int main(int argc, char * argv[]) {
 		close(s[i]);
 	}
 	
-	for (int i = 0; i < MAX_CONTROLADORES; i++) {
-		close(s_controladores[i]);
-	}
-
 	close(sock);
 	close(c_sock);
 	return 0;
