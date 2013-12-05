@@ -28,7 +28,8 @@ Modelo::Modelo(int njugadores, int tamtablero, int tamtotalbarcos){
 	//~ lock_tiros = new RWLock();
 	lock_eventos = new RWLock[max_jugadores];
 	lock_jugando = new RWLock();
-	lock_nuevo_jugador = new RWLock();
+	lock_estado_jugadores = new RWLock();
+	lock_estado_eventos = new RWLock();
 	for (int i = 0; i < max_jugadores; i++) {
 		lock_jugadores[i] = RWLock();
 		lock_eventos[i] = RWLock();
@@ -55,7 +56,7 @@ Modelo::~Modelo() {
 	delete[] lock_jugadores;
 	delete[] lock_eventos;
 	delete lock_jugando;
-	delete lock_nuevo_jugador;
+	delete lock_estado_jugadores;
 }
 
 /** Registra un nuevo jugador en la partida */
@@ -69,7 +70,7 @@ int Modelo::agregarJugador(std::string nombre) {
 	
 	int nuevoid = 0; 
 	
-	lock_nuevo_jugador.wlock(); //como no hay funcion que cambie el lock de lectura a escritura pido wlock directamente
+	lock_estado_jugadores.wlock(); //como no hay funcion que cambie el lock de lectura a escritura pido wlock directamente
 	
 	for (nuevoid = 0; nuevoid < max_jugadores && this->jugadores[nuevoid] != NULL; nuevoid++);
 	
@@ -82,7 +83,7 @@ int Modelo::agregarJugador(std::string nombre) {
 	
 	this->cantidad_jugadores++;
 	
-	lock_nuevo_jugador.wunlock();
+	lock_estado_jugadores.wunlock();
 	lock_jugando->runlock();
 	return nuevoid;
 }
@@ -92,11 +93,11 @@ int Modelo::agregarJugador(std::string nombre) {
 	Sino quita todos los barcos del usuario.
 */
 error Modelo::ubicar(int t_id, int * xs, int *  ys, int tamanio) {
-	lock_jugando->rlock();
+	lock_jugando->wlock();
 	
 	if (this->jugando != SETUP) return -ERROR_JUEGO_EN_PROGRESO;
 	
-	
+	lock_estado_jugadores.rlock();
 	lock_jugadores[t_id].wlock();
 	
 	if (this->jugadores[t_id] == NULL) return -ERROR_JUGADOR_INEXISTENTE;
@@ -118,41 +119,54 @@ error Modelo::ubicar(int t_id, int * xs, int *  ys, int tamanio) {
 		}
 	}
 	lock_jugadores[t_id].wunlock();
-	lock_jugando->runlock();
+	lock_jugando->wunlock();
 	return retorno;
 }
 
 /** Quita todos los barcos del usuario */
-error Modelo::borrar_barcos(int t_id) {
+error Modelo::_borrar_barcos(int t_id) { //privada, no locks
 	if (this->jugando != SETUP) return -ERROR_JUEGO_EN_PROGRESO;
 	if (this->jugadores[t_id] == NULL) return -ERROR_JUGADOR_INEXISTENTE;
-	return this->jugadores[t_id]->quitar_barcos();
+	error e = this->jugadores[t_id]->quitar_barcos();
+	return e;
 }
 
-error Modelo::_empezar() {
+error Modelo::borrar_barcos(int t_id) {
+	lock_jugando->rlock();
+	lock_jugadores[t_id].wlock();
+	error e = this->_borrar_barcos();
+	lock_jugadores[t_id].wunlock();
+	lock_jugando->runlock();
+	return e;
+}
 
+error Modelo::_empezar() { ///privada
+	
+	if (this->jugando != SETUP) return -ERROR_JUEGO_EN_PROGRESO;
+	
+	for (int i = 0; i < max_jugadores; i++) {
+		if (this->jugadores[i] != NULL) {
+			Evento evento(0, i, 0, 0, EVENTO_START);
+			this->eventos[i].push(evento);
+		}
+	}
+	this->jugando = DISPAROS;
+	return ERROR_NO_ERROR;
 }
 
 /** Comienza la fase de tiros
 */
 error Modelo::empezar() {
-	lock_jugando->rlock();
-	if (this->jugando != SETUP) return -ERROR_JUEGO_EN_PROGRESO;
-	
-	for (int i = 0; i < max_jugadores; i++) {
-		//rlock jugadores?
-		if (this->jugadores[i] != NULL) {
-			Evento evento(0, i, 0, 0, EVENTO_START);
-			lock_eventos.wlock();
-			this->eventos[i].push(evento);
-			lock_eventos.wunlock();
-		}
-	}
 	lock_jugando->wlock();
-	this->jugando = DISPAROS;
+	lock_estado_jugadores->wlock();
+	lock_estado_eventos->wlock();
+	
+	error e = this->_empezar();
+	
+	lock_estado_eventos->wunlock();
+	lock_estado_jugadores->wunlock();
 	lock_jugando->wunlock();
-	lock_jugando->runlock();
-	return ERROR_NO_ERROR;
+	return e;
 	
 }
 /** LLamado al finalizar la partida.
