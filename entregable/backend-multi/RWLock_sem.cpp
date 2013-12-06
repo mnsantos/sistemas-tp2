@@ -26,7 +26,7 @@ void RWLock :: rlock() {
 
 	sem_wait(&mutex);				//pedimos mutex_r para evitar deadlock.
 									//vemos si hay escritores escribiendo/esperando
-	//~ cout << endl << "rlock R:" << readers << " W:" << writers << endl;
+	cout << endl << "rlock R:" << readers << " W:" << writers << endl;
 	if (writers == 0 && writers_waiting == 0){				//si no hay escritores => ESTADO LECTURA
 		
 		//~ sem_post(&mutex_w);
@@ -35,12 +35,12 @@ void RWLock :: rlock() {
 			sem_wait(&rw_lock);		//tomo el rw_lock
 			
 			//*debug*/
-			//~ cout << "<*L ";
+			cout << "<*L ";
 			//**/
 		}
 		readers++;					//sino me sumo al resto.
 		//*debug*/
-		//~ cout << "<L ";
+		cout << "<L ";
 		//**/
 		
 		assert(writers == 0);
@@ -55,20 +55,21 @@ void RWLock :: rlock() {
 		sem_post(&mutex);		
 									//importante pedir el mutex_r antes de ceder mutex_w
 		//*debug*/
-		//~ cout << "*rh* ";
+		cout << "*rh* ";
 		//**/
 		sem_wait(&accessR);			//esperamos el cambio de estado.
 									//cuando ganamos el acceso, writers deberia ser cero.
 		//*debug*/
-		//~ cout << "*ruh* ";
+		cout << "*ruh* ";
 		//**/
 		sem_wait(&mutex);
 		if (readers == 0){			//si soy el primero
 			sem_wait(&rw_lock);		//tomo el rw_lock
+			cout << "<*L ";
 		}
 		readers++;					//hacemos presencia		
 		//*debug*/
-		//~ cout << "<L ";
+		cout << "<L ";
 		//**/		
 		assert(writers == 0);
 		assert(readers > 0);
@@ -85,7 +86,7 @@ void RWLock :: wlock() {
 
 	sem_wait(&mutex);				//vemos si hay lectores leyendo/esperando
 
-	//~ cout << endl << "wlock R:" << readers << " W:" << writers << endl;
+	cout << endl << "wlock R:" << readers << " W:" << writers << endl;
 	if(readers == 0 && readers_waiting == 0){				//si no hay
 		//~ sem_wait(&mutex_w);			
 		
@@ -93,7 +94,10 @@ void RWLock :: wlock() {
 		sem_wait(&rw_lock); 		//esperamos nuestro turno, no hay escritura concurrente todos juntos, este semaforo deberia funcionar.		
 		
 		//*debug*/
-		//~ cout << "<*E ";
+		cout << "<*E ";
+		sem_wait(&mutex);
+		writers++;
+		sem_post(&mutex);
 		//**/
 		assert(readers == 0);
 		///escritura.
@@ -103,12 +107,12 @@ void RWLock :: wlock() {
 		writers_waiting++;
 		sem_post(&mutex);
 		//*debug*/
-		//~ cout << "*wh* ";
+		cout << "*wh* ";
 		//**/
 		sem_wait(&accessW);			//pedimos acceso.
 									//con el acceso, no deberia haber lectores.
 		//*debug*/
-		//~ cout << "*wuh* ";
+		cout << "*wuh* ";
 		//**/
 		sem_wait(&mutex);
 		writers++;
@@ -119,7 +123,7 @@ void RWLock :: wlock() {
 		assert(readers == 0);
 		///escritura.
 		//*debug*/
-		//~ cout << "<*E ";
+		cout << "<*E ";
 		//**/
 	}
 	
@@ -130,7 +134,7 @@ void RWLock :: wlock() {
 void RWLock :: runlock() {
 
 	sem_wait(&mutex);
-	//~ cout << endl << "runlock R:" << readers << " W:" << writers << endl;
+	cout << endl << "runlock R:" << readers << " W:" << writers << endl;
 	readers--;						//salimos
 	if (readers == 0){				//si somos el ultimo en salir
 		//~ sem_wait(&mutex_w);			//vemos si hay escritores esperando
@@ -143,15 +147,15 @@ void RWLock :: runlock() {
 		}
 		//~ sem_post(&mutex_w);
 		//*debug*/
-		//~ cout << "L*> ";
+		cout << "L*> ";
 		//**/		
 		sem_post(&rw_lock);		//cedemos el lock.
 
+	} else {
+		//*debug*/
+		cout << "L> ";
+		//**/	
 	}
-	//*debug*/
-	//~ cout << "L> ";
-	//**/	
-	
 	sem_post(&mutex);
 
 }
@@ -159,7 +163,7 @@ void RWLock :: runlock() {
 void RWLock :: wunlock() {
 	
 	sem_wait(&mutex);
-	//~ cout << endl << "wunlock R:" << readers << " W:" << writers << endl;
+	cout << endl << "wunlock R:" << readers << " W:" << writers << endl;
 	writers--;
 	if (writers == 0){
 		if(readers_waiting > 0){
@@ -171,7 +175,7 @@ void RWLock :: wunlock() {
 		}
 	}	
 	//*debug*/
-	//~ cout << "E*> ";
+	cout << "E*> ";
 	//**/
 	
 	sem_post(&rw_lock);

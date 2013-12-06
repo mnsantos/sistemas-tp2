@@ -24,6 +24,9 @@ void *lector(void * p_miNumero){
 	pthread_mutex_unlock(&nomepiso);
 	
 	lock.runlock();
+	pthread_mutex_lock(&nomepiso);
+	cout << "termine: " << miNumero << endl;
+	pthread_mutex_unlock(&nomepiso);
 	return NULL;
 }
 
@@ -35,48 +38,55 @@ void *escritor(void * p_miNumero){
 	// Esperar un valor aleatorio de ms.
 	usleep(2000); //4ms
 	//
-	
+	pthread_mutex_lock(&nomepiso);
 	cout<<"Escribi: "<<variable_a_leer_escribir<<" y soy: "<<miNumero<<endl;
+	pthread_mutex_unlock(&nomepiso);
 	lock.wunlock();
+	pthread_mutex_lock(&nomepiso);
+	cout << "termine: " << miNumero << endl;
+	pthread_mutex_unlock(&nomepiso);
 	return NULL;
 }
 
 
 int main(int argc, char **argv)
 {
-	int cant_lectores = 5;
-	int cant_escritores = 5;
+	int cant_lectores = 2;
+	int cant_escritores = 0;
 	
 	pthread_mutex_init(&nomepiso, NULL);
+		int tid;
+	
+	pthread_t threadW[cant_escritores];
+	int tidsW[cant_escritores];
+	for (tid = 0; tid < cant_escritores; ++tid){
+		tidsW[tid] = tid;
+		pthread_create(&threadW[tid], NULL, escritor , &tidsW[tid]);
+	}
+	
 	
 	pthread_t threadR[cant_lectores]; int tidsR[cant_lectores];
-	int tid;
+
 	for (tid = 0; tid < cant_lectores; ++tid){
 		tidsR[tid] = tid;
 		pthread_create(&threadR[tid], NULL, lector ,&tidsR[tid]);
 	}
 
 
-	pthread_t threadW[cant_escritores];
-	int tidsW[cant_lectores];
-	for (tid = 0; tid < cant_escritores; ++tid){
-		tidsW[tid] = tid;
-		pthread_create(&threadW[tid], NULL, escritor , &tidsW[tid]);
-	}
 	
 	//pthread exit(status)
-	int * status;
+	//~ int * status;
 	
 	for (tid = 0; tid < cant_lectores; ++tid){
 		pthread_join(threadR[tid], NULL);
 	}
 
 
-	for (tid = 0; tid < cant_lectores; ++tid){
+	for (tid = 0; tid < cant_escritores; ++tid){
 		pthread_join(threadW[tid], NULL);
 	}
 
-	//cout<<"termine"<<endl;
+	cout<<"termine"<<endl;
 	
 	return 0;
 	
