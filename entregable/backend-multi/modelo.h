@@ -35,6 +35,9 @@ class Modelo {
 		void	print();
 #endif
 	private:
+		error	_borrar_barcos(int t_id);
+	    error   _empezar();								
+		error   _finalizar();							
 		int						cantidad_jugadores;				/* cantidad de jugadores inscriptos */
 		int						jugadores_listos;				/* cantidad de jugadores ya ubicados */
 		Jugador					**jugadores;					/* Jugadores */

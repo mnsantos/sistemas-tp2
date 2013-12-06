@@ -41,18 +41,18 @@ int no_bloqueante(int fd) {
 
 
 /* Variables globales del server */
-int sock, c_sock;					// Sockets donde se escuchan las conexiones entrantes para jugadores/controladores
-struct sockaddr_in name, remote;	// Direcciones
-struct sockaddr_in c_name, c_remote;	// Direcciones
-//char buf[MAX_MSG_LENGTH];			// Buffer de recepción de mensajes
-int s[MAX_JUGADORES];				// Sockets de los jugadores
-int ids[MAX_JUGADORES];				// Ids de los jugadores
-Modelo * model = NULL;				// Puntero al modelo del juego
-Decodificador *decoders[MAX_JUGADORES];		// Puntero al decodificador				
+int sock, c_sock;										// Sockets donde se escuchan las conexiones entrantes para jugadores/controladores
+struct sockaddr_in name, remote;						// Direcciones
+struct sockaddr_in c_name, c_remote;					// Direcciones
+int s[MAX_JUGADORES];									// Sockets de los jugadores
+int ids[MAX_JUGADORES];									// Ids de los jugadores
+Modelo * model = NULL;									// Puntero al modelo del juego
+Decodificador *decoders[MAX_JUGADORES];					// Decodificadores de los jugadores
+Decodificador *deco_controladores[MAX_CONTROLADORES];	// Decodificadores de los controladores
 
-			/** un deco por thread? */
-Decodificador *deco_controladores[MAX_CONTROLADORES];
-/** un deco por cada controlador? */
+//globales de los threads de control.
+pthread_t control_threads[MAX_CONTROLADORES]; 
+int c_tids[MAX_CONTROLADORES];			
 
 
 int n, tamanio, tamanio_barcos;		// Variables de configuracion del juego.
@@ -168,10 +168,21 @@ void *atencion_p(void* arg) {
 		sale = model->termino();
 	}
 	
-	//pthread_exit(NULL);
+	pthread_exit(NULL);
 	return NULL;
 }
-void *accept_c() {
+
+void *atencion_c(void* arg) {
+	int controlador = *((int *) arg);
+	
+	atender_controlador(controlador);
+	
+	close(s_controladores[controlador]);
+	pthread_exit(NULL);
+	return NULL;
+}
+
+void *accept_c(void*) {
 	int t;
 	
 	for(int controlador = 0; controlador < MAX_CONTROLADORES; ++controlador){
@@ -188,20 +199,10 @@ void *accept_c() {
 				(char *) &flag,  							/* the cast is historical */
 				sizeof(int));    							/* length of option value */		
 		
-		pthread_create(&control_threads[tid],NULL,atencion_c,&c_tids[tid]);
+		pthread_create(&control_threads[controlador],NULL,atencion_c,&c_tids[controlador]);
 	}
-
+	pthread_exit(NULL);
 	//lanza un thread por cada conexion entrante.
-	return NULL;
-}
-void *atencion_c(void* arg) {
-	int t;
-	int controlador = *((int *) arg);
-	
-	atender_controlador(controlador);
-	
-	close(s_controladores[controlador]);
-	//~ pthread_exit(NULL);
 	return NULL;
 }
 
@@ -276,8 +277,8 @@ int main(int argc, char * argv[]) {
 		exit(1);
 	}
 
-	pthread_t control_threads[MAX_CONTROLADORES]; 
-	int c_tids[MAX_CONTROLADORES];
+	//~ pthread_t control_threads[MAX_CONTROLADORES]; 
+	//~ int c_tids[MAX_CONTROLADORES];
 	for(int i = 0; i < MAX_CONTROLADORES; ++i){
 		c_tids[i] = -1;
 	}
@@ -302,8 +303,8 @@ int main(int argc, char * argv[]) {
 		}
 		ids[jugador] = -1;
 		int flag = 1;
-		setsockopt(s[jugador],            /* socket affected */
-				IPPROTO_TCP,     /* set option at TCP level */
+		setsockopt(s[jugador],					/* socket affected */
+				IPPROTO_TCP,				   /* set option at TCP level */
 				TCP_NODELAY,     /* name of option */
 				(char *) &flag,  /* the cast is historical */
 				sizeof(int));    /* length of option value */

@@ -46,9 +46,9 @@ std::string Jsonificador::start() {
 	std::stringstream ss;
 	ss << "{ \"Name\": \"Start\", \"Data\": [";
 	bool primero = true;
-	
+	this->modelo->lock_estado_jugadores->rlock();
 	for (int i = 0; i < max_jugadores; i++) {
-		lock_jugadores[i].rlock();
+		this->modelo->lock_jugadores[i].rlock();
 		if (this->modelo->jugadores[i]!= NULL) {
 			if (!primero) {
 				ss << ",";
@@ -58,9 +58,9 @@ std::string Jsonificador::start() {
 				primero = false;
 			}
 		}
-		lock_jugadores[i].runlock();
+		this->modelo->lock_jugadores[i].runlock();
 	}
-	
+	this->modelo->lock_estado_jugadores->runlock();
 	ss << "]}|";
 	return ss.str();
 }
@@ -69,7 +69,7 @@ std::string Jsonificador::start() {
 
 std::string Jsonificador::player_info(int id) {
 	std::stringstream ss;
-	lock_jugadores[i].rlock();
+	this->modelo->lock_jugadores[id].rlock();
 	Tablero * tab = this->modelo->jugadores[id]->tablero;
 	int st;
 	Casilla * cas;
@@ -88,7 +88,7 @@ std::string Jsonificador::player_info(int id) {
 		}
 		ss << "]";
 	}
-	lock_jugadores[i].runlock();
+	this->modelo->lock_jugadores[id].runlock();
 	ss <<"]}}|";
 	return ss.str();
 	
@@ -163,9 +163,10 @@ std::string Jsonificador::scores() {
 	std::stringstream ss;
 	ss << "{ \"Name\": \"Scores\", \"Data\": [";
 	bool primero = true;
-
+	this->modelo->lock_estado_jugadores->rlock();
+	
 	for (int i = 0; i < max_jugadores; i++) {
-		lock_jugadores[i].rlock();
+		this->modelo->lock_jugadores[i].rlock();
 		if (this->modelo->jugadores[i]!= NULL) {
 			if (!primero) {
 				ss << ",";
@@ -176,9 +177,10 @@ std::string Jsonificador::scores() {
 				primero = false;
 			}
 		}
-		lock_jugadores[i].runlock();
+		this->modelo->lock_jugadores[i].runlock();
 	}
 	
+	this->modelo->lock_estado_jugadores->runlock();
 	ss << "]}|";
 	return ss.str();
 }
