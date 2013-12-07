@@ -22,14 +22,15 @@ Modelo::Modelo(int njugadores, int tamtablero, int tamtotalbarcos){
 	this->jugadores_listos = 0;
 	this->jugando = SETUP;
 
-	//~ lock_cant_jugadores = new RWLock();
-	//~ lock_jugadores_listos = new RWLock();
+
 	lock_jugadores = new RWLock[max_jugadores];
-	//~ lock_tiros = new RWLock();
 	lock_eventos = new RWLock[max_jugadores];
+	
 	lock_jugando = new RWLock();
+	
 	lock_estado_jugadores = new RWLock();
 	lock_estado_eventos = new RWLock();
+	
 	for (int i = 0; i < max_jugadores; i++) {
 		lock_jugadores[i] = RWLock();
 		lock_eventos[i] = RWLock();
@@ -62,9 +63,9 @@ Modelo::~Modelo() {
 
 /** Registra un nuevo jugador en la partida */
 int Modelo::agregarJugador(std::string nombre) {
-	printf("aJ jugando pido lock\n");
+	//~ printf("aJ jugando pido lock\n");
 	lock_jugando->rlock();
-	printf("aJ jugando tengo el lock\n");
+	//~ printf("aJ jugando tengo el lock\n");
 	if (this->jugando != SETUP){
 		lock_jugando->runlock();
 		return -ERROR_JUEGO_EN_PROGRESO;
@@ -87,7 +88,7 @@ int Modelo::agregarJugador(std::string nombre) {
 	
 	lock_estado_jugadores->wunlock();
 	lock_jugando->runlock();
-	printf("aJ jugando devuelvo lock\n");
+	//~ printf("aJ jugando devuelvo lock\n");
 	return nuevoid;
 }
 
@@ -96,18 +97,18 @@ int Modelo::agregarJugador(std::string nombre) {
 	Sino quita todos los barcos del usuario.
 */
 error Modelo::ubicar(int t_id, int * xs, int *  ys, int tamanio) {
-	printf("llego a ubicar\n");
+	//~ printf("llego a ubicar\n");
 	lock_jugando->wlock();													//el juego puede que empiece, por lo que tomo el lock de jugando para escritura, aun si pierdo concurrencia.
-	printf("ubicar: lock jugando\n");
+	//~ printf("ubicar: lock jugando\n");
 	if (this->jugando != SETUP){
 		lock_jugando->wunlock();
 		return -ERROR_JUEGO_EN_PROGRESO;
 	}
 	
 	lock_estado_jugadores->rlock();											//necesito consistencia en jugadores, que no se agregue un jugador cuando puede que empiece el juego.
-	printf("ub estado_j pido lock\n");
+	//~ printf("ub estado_j pido lock\n");
 	lock_jugadores[t_id].wlock();
-	printf("aJ jugadores[tid] pido lock\n");
+	//~ printf("aJ jugadores[tid] pido lock\n");
 	if (this->jugadores[t_id] == NULL){
 		lock_jugadores[t_id].wunlock();
 		lock_estado_jugadores->runlock();											//necesito consistencia en jugadores, que no se agregue un jugador cuando puede que empiece el juego.
@@ -131,7 +132,7 @@ error Modelo::ubicar(int t_id, int * xs, int *  ys, int tamanio) {
 	lock_jugadores[t_id].wunlock();
 	lock_estado_jugadores->runlock();	
 	lock_jugando->wunlock();
-	printf("ub cedo todos los lock\n");
+	//~ printf("ub cedo todos los lock\n");
 	return retorno;
 }
 
@@ -235,16 +236,16 @@ error Modelo::ack(int s_id){
 
 bool Modelo::termino() {
 	bool res = true;
-	printf("termino () pido lock\n");
+	//~ printf("termino () pido lock\n");
 	lock_jugando->rlock();
-	printf("termino () lock tengo jugando\n");
+	//~ printf("termino () lock tengo jugando\n");
 	lock_estado_jugadores->rlock();
-	printf("termino () lock tengo e_j\n");
+	//~ printf("termino () lock tengo e_j\n");
 	if(this->jugando == SETUP){
 		res = false;
 		lock_estado_jugadores->runlock();
 		lock_jugando->runlock();
-		 printf("termino () devuelvo locks 1\n");
+		 //~ printf("termino () devuelvo locks 1\n");
 		return res;		
 	}
     for(int i = 0; i < max_jugadores && res; i++){
@@ -255,7 +256,7 @@ bool Modelo::termino() {
     }
     lock_estado_jugadores->runlock();
     lock_jugando->runlock();
-    printf("termino () devuelvo locks\n");
+    //~ printf("termino () devuelvo locks\n");
     return res;
 }
 
