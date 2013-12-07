@@ -47,13 +47,6 @@ Modelo::~Modelo() {
 	delete[] this->tiros;
 	delete[] this->eventos;
 	
-	//~ delete lock_cant_jugadores;
-	//~ delete lock_jugadores_listos;
-	//~ delete lock_tiros;
-	//~ for (int i = 0; i < max_jugadores; i++) {
-		//~ delete lock_jugadores[i]
-		//~ delete lock_eventos[i]
-	//~ }
 	delete[] lock_jugadores;
 	delete[] lock_eventos;
 	delete lock_jugando;
@@ -282,10 +275,18 @@ error Modelo::reiniciar() {
 /** Desuscribir a un jugador del juego */
 error Modelo::quitarJugador(int s_id) {
 	lock_jugando->rlock();
+	if (this->jugando != SETUP){
+		lock_jugando->runlock();
+		return -ERROR_JUEGO_EN_PROGRESO;
+	}	
 	lock_estado_jugadores->wlock();
 	lock_jugadores[s_id].wlock();
-	if (this->jugando != SETUP) return -ERROR_JUEGO_EN_PROGRESO;
-	if (this->jugadores[s_id] == NULL) return -ERROR_JUGADOR_INEXISTENTE;
+	if (this->jugadores[s_id] == NULL){
+		lock_jugadores[s_id].wunlock();
+		lock_estado_jugadores->wunlock();
+		lock_jugando->runlock();
+		return -ERROR_JUGADOR_INEXISTENTE;
+	}
 	delete this->jugadores[s_id];
 	
 	this->jugadores[s_id] = NULL;
@@ -372,21 +373,23 @@ int Modelo::dame_eta(int s_id) {
 int Modelo::tocar(int s_id, int t_id) {
 	
 	lock_jugando->wlock();
-	if (this->jugando != DISPAROS) return -ERROR_JUEGO_NO_COMENZADO;
-
+	if (this->jugando != DISPAROS){
+		lock_jugando->wunlock();
+		return -ERROR_JUEGO_NO_COMENZADO;
+	}
 	lock_jugadores[s_id].wlock();
 	
 	if (this->jugadores[s_id] == NULL){
-		lock_jugando->wunlock();
 		lock_jugadores[s_id].wunlock();
+		lock_jugando->wunlock();
 		return -ERROR_JUGADOR_INEXISTENTE;
 	}
 	lock_jugadores[t_id].wlock();
 	
 	if (this->jugadores[t_id] == NULL){
-		lock_jugando->wunlock();
-		lock_jugadores[s_id].wunlock();
 		lock_jugadores[t_id].wunlock();
+		lock_jugadores[s_id].wunlock();
+		lock_jugando->wunlock();
 		return -ERROR_JUGADOR_INEXISTENTE;
 	}
 	

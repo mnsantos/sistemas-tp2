@@ -52,11 +52,11 @@ class Modelo {
 		 * RWLock lock1,lock2...
 		*/
 
-		RWLock *lock_jugadores;
-		RWLock *lock_estado_jugadores;
-		RWLock *lock_eventos;
-		RWLock *lock_estado_eventos;
-		RWLock *lock_jugando;
+		RWLock *lock_jugadores;					//arreglo de RWLocks, 1 por cada jugador, protege los elementos del arreglo jugadores.
+		RWLock *lock_estado_jugadores;			//protege la integridad del arreglo de jugadores.
+		RWLock *lock_eventos;					//arreglo de RWLocks, 1 por cada jugador, protege las colas de eventos de cada uno.
+		RWLock *lock_estado_eventos;			//protege la integridad del arreglo de eventos.
+		RWLock *lock_jugando;					//protege la variable jugando
 		
 };
 

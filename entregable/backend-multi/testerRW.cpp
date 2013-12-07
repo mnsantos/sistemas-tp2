@@ -1,4 +1,5 @@
 #include <iostream>
+#include <stdlib.h>
 #include "RWLock_sem.h"
 #include <unistd.h>
 #include <pthread.h>
@@ -51,14 +52,22 @@ void *escritor(void * p_miNumero){
 
 int main(int argc, char **argv)
 {
-	int cant_lectores = 2;
-	int cant_escritores = 0;
+	if(argc != 3){
+		cout << "faltan parametros, se esperaba ./test cant_lectores cant_escritores" << endl;
+		return 0;
+	}
+	int cant_lectores = atoi(argv[1]);
+	int cant_escritores = atoi(argv[2]);
+	
+	cout << "Lectores: " << cant_lectores << endl;
+	cout << "Escritores: " << cant_escritores << endl;
 	
 	pthread_mutex_init(&nomepiso, NULL);
-		int tid;
+	int tid;
 	
 	pthread_t threadW[cant_escritores];
 	int tidsW[cant_escritores];
+	
 	for (tid = 0; tid < cant_escritores; ++tid){
 		tidsW[tid] = tid;
 		pthread_create(&threadW[tid], NULL, escritor , &tidsW[tid]);
@@ -85,8 +94,56 @@ int main(int argc, char **argv)
 	for (tid = 0; tid < cant_escritores; ++tid){
 		pthread_join(threadW[tid], NULL);
 	}
+	
+	cout << endl << endl <<"termine 1er caso"<<endl;
+	
+	for (tid = 0; tid < cant_lectores; ++tid){
+		tidsR[tid] = tid;
+		pthread_create(&threadR[tid], NULL, lector ,&tidsR[tid]);
+	}	
+	
+	for (tid = 0; tid < cant_escritores; ++tid){
+		tidsW[tid] = tid;
+		pthread_create(&threadW[tid], NULL, escritor , &tidsW[tid]);
+	}
 
-	cout<<"termine"<<endl;
+	//pthread exit(status)
+	//~ int * status;
+	
+	for (tid = 0; tid < cant_lectores; ++tid){
+		pthread_join(threadR[tid], NULL);
+	}
+
+
+	for (tid = 0; tid < cant_escritores; ++tid){
+		pthread_join(threadW[tid], NULL);
+	}
+	
+	cout << endl << endl <<"termine 2 caso"<<endl;
+	
+		for (tid = 0; tid < cant_lectores; ++tid){
+		tidsR[tid] = tid;
+		pthread_create(&threadR[tid], NULL, lector ,&tidsR[tid]);
+	}	
+	
+	for (tid = 0; tid < cant_escritores; ++tid){
+		tidsW[tid] = tid;
+		pthread_create(&threadW[tid], NULL, escritor , &tidsW[tid]);
+	}
+
+	//pthread exit(status)
+	//~ int * status;
+	
+	for (tid = 0; tid < cant_lectores; ++tid){
+		pthread_join(threadR[tid], NULL);
+	}
+
+
+	for (tid = 0; tid < cant_escritores; ++tid){
+		pthread_join(threadW[tid], NULL);
+	}
+	
+	cout << endl << endl <<"termine 2 caso"<<endl;
 	
 	return 0;
 	
