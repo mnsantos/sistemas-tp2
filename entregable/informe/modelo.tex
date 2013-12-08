@@ -1,0 +1,13 @@
+Como vimos anteriormente, durante el transcurso del juego se tiene $n + m$ threads, donde $n$ es la cantidad de jugadores y $m$ la cantidad de controladores que se conectan. 
+Lo que queremos hacer es que el juego no se rompa si varios threads quieren interactuar en simultáneo con los mismos elementos del juego. Por ejemplo queremos evitar inconsistencias en el modelo del juego cuando se conectan dos jugadores y se los agrega al modelo, o cuando dos jugadores ataquen al mismo jugador simultáneamente.
+
+Se utilizaron los siguientes locks para hacer $thread-safe$ el modelo:
+\begin{itemize}
+	\item	\textbf{lock_jugadores} es un arreglo de RWLocks, uno por cada jugador, cada uno protege los elementos de cada uno de los jugadores.
+	\item	\textbf{lock_estado_jugadores} protege la integridad del arreglo de jugadores.
+	\item	\textbf{lock_eventos}, es otro arreglo de RWLocks, asi como el anterior tiene un lock por cada jugador, protege las colas de eventos de cada uno.
+	\item	\textbf{lock_estado_eventos} protege la integridad del arreglo de eventos.
+	\item	\textbf{lock_jugando} protege la variable jugando (el estado del juego).
+\end{itemize}
+
+
