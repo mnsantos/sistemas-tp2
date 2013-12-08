@@ -25,31 +25,35 @@ Cuando un jugador quiere conectarse al juego el $main$ $thread$ realiza las sigu
 
 Pseudocódigo:
 
-\begin{algorithmic}
-  \Function{Jugador}{}
+\begin{algorithm}[H]
+\caption{Jugador}\label{ej1}
+\begin{algorithmic}[1]
+\Procedure{Jugador}{}
 	\State $pthread\_t \ threads[MAX\_JUGADORES]$ 
 	\State $int \ tids[MAX\_JUGADORES]$
 	\For{jugador = 0 to n}
 		\State accept(jugador)
 		\State $pthread\_create(\&threads[i],NULL,atencion\_p,\&tids[jugador])$
 	\EndFor
-  \EndFunction
+\EndProcedure
 \end{algorithmic}
+\end{algorithm}
 
-La función encargada de atender a los jugadores es:
-
-\begin{algorithmic}
-  \Function{atencion\_p}{jugador}
+\begin{algorithm}[H]
+\caption{atencion\_p}\label{ej1}
+\begin{algorithmic}[1]
+\Procedure{atencion\_p}{jugador}
 	\State $bool$ $sale$ $=$ $false$ 
 	\While {$!sale$}
 		\State atender\_jugador(jugador)
 		\State sale = model->termino()
 	\EndWhile
 	\State $pthread\_exit(NULL)$
-  \EndFunction
+\EndProcedure
 \end{algorithmic}
+\end{algorithm}
 
-Habrá un $thread$, creado por el $main$ $thread$, encargado de atender a los controladores de forma similar a la de los jugadores: aceptando la conexión y creando un nuevo $thread$ por cada controlador.
+Habrá un $thread$, creado por el $main$ $thread$, encargado de atender a los controladores de forma similar a la de los jugadores: aceptando conexiones y creando un nuevo $thread$ por cada controlador. Cada uno de estos $thread$ ejecuta la función $atencion\_c$.
 
 Una vez que todos los $threads$ encargados de atender a los jugadores y controladores finalizan, el $main$ $thread$ termina su ejecución. Para comprender mejor el accionar del server, presentamos un esquema ilustrativo:
 

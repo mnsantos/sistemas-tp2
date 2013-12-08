@@ -12,31 +12,39 @@ Para resolver este problema implementamos dos estructuras de datos (RWLock\_libr
 
 En esta implementación utilizamos 3 semáforos y un contador inicializados de la siguiente manera:
 
-\begin{algorithmic}
-  \Function{Initialization}{}
+\begin{algorithm}[H]
+\caption{Inicialización}\label{ej1}
+\begin{algorithmic}[1]
+\Procedure{Inicialización}{}
 	\State turnstile = Semaphore(1)
 	\State mutex = Semaphore(1)
 	\State roomEmpty = Semaphore(1)
 	\State readers = 0
-  \EndFunction
+\EndProcedure
 \end{algorithmic}
+\end{algorithm}
 
 En donde $mutex$ sirve para proteger la variable $readers$, $roomEmpty$ provee acceso exclusivo a la sección crítica y $turnstile$ evita la inanición de los escritores.
 
-\begin{algorithmic}
-  \Function{Writers}{}
+\begin{algorithm}[H]
+\caption{Writers}\label{ej1}
+\begin{algorithmic}[1]
+\Procedure{Writers}{}
 	\State turnstile.wait()
 	\State roomEmpty.wait()
 	\State //CRITICAL SECTION
 	\State turnstile.signal()
 	\State roomEmpty.signal()
-  \EndFunction
+\EndProcedure
 \end{algorithmic}
+\end{algorithm}
 
-Si llega un escritor mientras hay lectores en la sección crítica entonces este se bloquea esperando el lock de $roomEmpty$ lo que significa que obtuvo el lock de $turnstile$. Esto último impedirá el acceso de más lectores mientras haya un escritor esperando (no hay inanición de escritores). A continuación, el código de los lectores:
+Si llega un escritor mientras hay lectores en la sección crítica entonces este se bloquea en la línea 3 esperando el lock de $roomEmpty$. Esto significa que obtuvo el lock de $turnstile$ que impedirá el acceso de más lectores mientras haya un escritor esperando (no hay inanición de escritores). A continuación, el código de los lectores:
 
-\begin{algorithmic}
-  \Function{Readers}{}
+\begin{algorithm}[H]
+\caption{Readers}\label{ej1}
+\begin{algorithmic}[1]
+\Procedure{Readers}{}
 	\State turnstile.wait()
 	\State turnstile.signal()
 	\State mutex.wait()
@@ -47,17 +55,20 @@ Si llega un escritor mientras hay lectores en la sección crítica entonces este
 	\State mutex.signal()
 	\State //CRITICAL SECTION
 	\State mutex.wait()
-	\State readers--
+	\State readers$--$
 	\If{readers==0}
 		\State roomEmpty.signal()
 	\EndIf
 	\State mutex.signal()
-  \EndFunction
+\EndProcedure
 \end{algorithmic}
+\end{algorithm}
 
-El primer lector en ingresar espera que no haya nadie presente en la sección crítica. Cuando el último lector se va, desbloquea $roomEmpty$ permitiendo que ingrese el escritor que estaba esperando. Cuando el escritor se va, desbloquea $turnstile$ permitiendo que cualquiera de los que estaba esperando (sea escritor o lector) acceda a la sección crítica. Esto último nos garantiza que la implementación se encuentra libre de inanición ya que tanto escritores como lectores tendrán acceso garantizado a la memoria compartida y no serán encolados por siempre.
+El primer lector en ingresar espera que no haya nadie presente en la sección crítica (línea 6). Cuando el último lector se va, desbloquea $roomEmpty$ permitiendo que ingrese el escritor que estaba esperando. Cuando el escritor se va, desbloquea $turnstile$ permitiendo que cualquiera de los que estaba esperando (sea escritor o lector) acceda a la sección crítica. Esto último nos garantiza que la implementación se encuentra libre de inanición ya que tanto escritores como lectores tendrán acceso garantizado a la memoria compartida y no serán encolados por siempre.
 
 \subsection{Implementación 2}
+
+
 
 \subsection{Tester}
 

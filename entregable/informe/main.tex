@@ -17,6 +17,77 @@
 \usepackage{color}
 \usepackage{subfigure}
 
+\usepackage{xspace}
+\usepackage{xargs} %Para crear funciones con muchos argumentos
+\usepackage{ifthen}
+\usepackage{aed2-tad,aed2-symb,aed2-itef,caratula} %Macros de Algo2
+\usepackage{algorithm}% http://ctan.org/pkg/algorithms
+%\usepackage{algorithmic} %paquete para hacer pseudocodigo
+\usepackage{titlesec}%http://foro-c.com/blog/latex-formato-de-titulos-de-capitulos-secciones-etc/
+\usepackage{setspace}
+\usepackage{fancyhdr}
+\usepackage[colorlinks=true, linkcolor=blue]{hyperref} %Links para el indice.
+\usepackage{float} %Insercion de imagenes flotantes
+\usepackage{ stmaryrd }
+
+\usepackage{caption}
+\usepackage{subcaption}
+
+\newcommand{\moduloNombre}[1]{\textbf{#1}}
+
+\let\NombreFuncion=\textsc
+\let\TipoVariable=\texttt
+\let\ModificadorArgumento=\textbf
+\newcommand{\res}{$res$\xspace}
+\newcommand{\tab}{\hspace*{7mm}}
+
+\newcommandx{\TipoFuncion}[3]{%
+  \NombreFuncion{#1}(#2) \ifx#3\empty\else $\to$ \res\,: \TipoVariable{#3}\fi% nombreFuncion(parametros) -> res:(Tipo)
+}
+\newcommand{\In}[2]{\ModificadorArgumento{in} \ensuremath{#1}\,: \TipoVariable{#2}\xspace}
+\newcommand{\Out}[2]{\ModificadorArgumento{out} \ensuremath{#1}\,: \TipoVariable{#2}\xspace}
+\newcommand{\Inout}[2]{\ModificadorArgumento{in/out} \ensuremath{#1}\,: \TipoVariable{#2}\xspace}
+\newcommand{\Aplicar}[2]{\NombreFuncion{#1}(#2)}
+
+\newlength{\IntFuncionLengthA}
+\newlength{\IntFuncionLengthB}
+\newlength{\IntFuncionLengthC}
+%InterfazFuncion(nombre, argumentos, valor retorno, precondicion, postcondicion, complejidad, descripcion, aliasing)
+\newcommandx{\InterfazFuncion}[9][4=true,6,7,8,9]{%
+  \hangindent=\parindent
+  \TipoFuncion{#1}{#2}{#3}\\%
+  \textbf{Pre} $\equiv$ \{#4\}\\%
+  \textbf{Post} $\equiv$ \{#5\}%
+  \ifx#6\empty\else\\\textbf{Complejidad:} #6\fi%
+  \ifx#7\empty\else\\\textbf{Descripcion:} #7\fi%
+  \ifx#8\empty\else\\\textbf{Aliasing:} #8\fi%
+  \ifx#9\empty\else\\\textbf{Requiere:} #9\fi%
+}
+
+\newenvironment{Algoritmos}{%
+  \vspace*{2ex}%
+  \noindent\textbf{}%
+  \vspace*{2ex}%
+}{}
+
+\newcommand{\Titulo}[1]{
+  \vspace*{1ex}\par\noindent\textbf{\large #1}\par
+}
+
+\newcommand{\DRef}{\ensuremath{\rightarrow}}
+
+\newcommandx{\Algoritmo}[4]{%
+	\noindent\TipoFuncion{#1}{#2}{#3}
+	\begin{algorithmic}[1]
+	#4
+	\end{algorithmic}
+}%
+
+\newcommand{\nom}[1]{\NombreFuncion{#1}}
+
+\newcommand{\comp}[1]{\hfill \ensuremath{O(#1)}}
+\newcommand{\compTot}[1]{\hfill \textbf{Complejidad Total: }\ensuremath{O(#1)}}
+
 \begin{document}
 
 \input{caratula.tex}
