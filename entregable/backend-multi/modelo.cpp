@@ -2,6 +2,7 @@
 //#ifdef DEBUG
 #include <cstdio>
 //#endif
+#include <sstream>
 #include <constantes.h>
 #include <globales.h> 
 #include <stdlib.h>
@@ -190,14 +191,6 @@ error Modelo::_finalizar() { //privada, no locks
 	}
 
 	this->jugando = FINALIZADO;
-
-	//						~~~~~~~~~~~~~~								aca habria que imprimir los scores de cada jugador.
-	printf("PUNTAJES: \n");
-	for (int i = 0; i < max_jugadores; i++) {
-		if (this->jugadores[i] != NULL) {
-			printf("%s : %i pts.\n",this->jugadores[i]->dame_nombre().c_str(),this->jugadores[i]->dame_puntaje());
-		}
-	}
 	
 	return ERROR_NO_ERROR;
 }
@@ -312,15 +305,15 @@ int Modelo::apuntar(int s_id, int t_id, int x, int y, int *eta) {
 		lock_jugando->runlock();
 		return -ERROR_JUGADOR_INEXISTENTE;
 	}
-	lock_jugadores[t_id].wlock();
+	if(t_id != s_id) lock_jugadores[t_id].wlock();
 	if (this->jugadores[t_id] == NULL){
-		lock_jugadores[t_id].wunlock();
+		if(t_id != s_id) lock_jugadores[t_id].wunlock();
 		lock_jugadores[s_id].wunlock();
 		lock_jugando->runlock();
 		return -ERROR_JUGADOR_INEXISTENTE;
 	}
 	if (! this->jugadores[s_id]->esta_vivo()){
-		lock_jugadores[t_id].wunlock();
+		if(t_id != s_id) lock_jugadores[t_id].wunlock();
 		lock_jugadores[s_id].wunlock();
 		lock_jugando->runlock();
 		return -ERROR_JUGADOR_HUNDIDO;
@@ -339,7 +332,7 @@ int Modelo::apuntar(int s_id, int t_id, int x, int y, int *eta) {
 			lock_estado_eventos->runlock();
 		}
 	}
-	lock_jugadores[t_id].wunlock();
+	if(t_id != s_id) lock_jugadores[t_id].wunlock();
 	lock_jugadores[s_id].wunlock();
 	lock_jugando->runlock();
 	return retorno;
@@ -384,10 +377,10 @@ int Modelo::tocar(int s_id, int t_id) {
 		lock_jugando->wunlock();
 		return -ERROR_JUGADOR_INEXISTENTE;
 	}
-	lock_jugadores[t_id].wlock();
+	if(t_id != s_id) lock_jugadores[t_id].wlock();
 	
 	if (this->jugadores[t_id] == NULL){
-		lock_jugadores[t_id].wunlock();
+		if(t_id != s_id) lock_jugadores[t_id].wunlock();
 		lock_jugadores[s_id].wunlock();
 		lock_jugando->wunlock();
 		return -ERROR_JUGADOR_INEXISTENTE;
@@ -395,7 +388,7 @@ int Modelo::tocar(int s_id, int t_id) {
 	
 	
 	lock_eventos[s_id].wlock();
-	lock_eventos[t_id].wlock();
+	if(t_id != s_id) lock_eventos[t_id].wlock();
 	int retorno = -ERROR_ETA_NO_TRANSCURRIDO;
 	if (this->tiros[s_id].es_posible_tocar()) {
 		int x = this->tiros[s_id].x;
@@ -439,10 +432,10 @@ int Modelo::tocar(int s_id, int t_id) {
 	}
 
 
-	lock_eventos[t_id].wunlock();
+	if(t_id != s_id) lock_eventos[t_id].wunlock();
 	lock_eventos[s_id].wunlock();
 	
-	lock_jugadores[t_id].wunlock();
+	if(t_id != s_id) lock_jugadores[t_id].wunlock();
 	lock_jugadores[s_id].wunlock();
 	lock_jugando->wunlock();
 	return retorno;
@@ -507,4 +500,19 @@ Evento Modelo::actualizar_jugador(int s_id) {
 	}
 }
 
-
+std::string Modelo::damePuntajes(){
+	std::stringstream ss;
+	ss << "\n \n PUNTAJES: \n";
+	lock_estado_jugadores->rlock();
+	for (int i = 0; i < max_jugadores; i++) {
+		lock_jugadores[i].rlock();
+		if (this->jugadores[i] != NULL) {
+			ss << this->jugadores[i]->dame_nombre() << " : " << this->jugadores[i]->dame_puntaje() << " pts.\n";
+		}
+		lock_jugadores[i].runlock();
+	}
+	ss << "\n";
+	lock_estado_jugadores->runlock();
+	
+	return ss.str();
+}

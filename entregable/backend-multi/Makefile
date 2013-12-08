@@ -7,13 +7,16 @@ LDFLAGS=-pthread
 
 BINARY=server
 JSONCPP=libs/jsoncpp/jsoncpp.a
-OBJECTS=embarcacion.o elemento.o casilla.o tablero.o globales.o jugador.o modelo.o jsonificador.o decodificador.o evento.o tiro.o RWLock_sem.o
+OBJECTS=embarcacion.o elemento.o casilla.o tablero.o globales.o jugador.o modelo.o jsonificador.o decodificador.o evento.o tiro.o RWLock_sem_librito.o
 
 .PHONY: clean all libs
 
 all: $(OBJECTS) libs server
 
 test: testerRW.cpp RWLock_sem.o
+	$(CXX) $(LDFLAGS) $(CXXFLAGS) -o $@ $^
+
+test2: testerRW.cpp RWLock_sem_librito.o
 	$(CXX) $(LDFLAGS) $(CXXFLAGS) -o $@ $^
 
 $(BINARY): server.cpp $(OBJECTS) $(JSONCPP)

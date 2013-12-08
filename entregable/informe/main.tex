@@ -1,0 +1,42 @@
+\documentclass[11pt, a4paper]{article}
+\usepackage[paper=a4paper, left=1.5cm, right=1.5cm, bottom=1.5cm, top=1.5cm]{geometry}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage[section]{placeins}
+\usepackage{caratula/caratula}
+\usepackage{listings}
+\usepackage{algpseudocode}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{amsmath}
+%\usepackage{adjustbox}
+\usepackage{blindtext}
+\usepackage{sidecap}
+\usepackage{color}
+\usepackage{subfigure}
+
+\begin{document}
+
+\input{caratula.tex}
+%Carátula
+\maketitle
+\newpage
+%Indice
+\tableofcontents
+\newpage
+
+
+\section{Introducción}
+\input{introduccion.tex}
+\section{RWLock: Lock de lecto-escritura sin inanición}
+\input{rwlock.tex}
+\section{Modificando $server.cpp$}
+\input{server.tex}
+\section{Protegiendo el juego. Un modelo thread-safe.}
+\input{modelo.tex}
+\section{Conclusiones}
+\input{conclusiones.tex}
+
+\end{document}

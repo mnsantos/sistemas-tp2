@@ -321,7 +321,9 @@ int main(int argc, char * argv[]) {
 		pthread_join(control_threads[tid], NULL);
 	}
 	
-    printf("Termino el juego, cerrando\n");
+    printf("\nTermino el juego.\n");
+    printf("%s",model->damePuntajes().c_str());
+	printf("\n cerrando...\n ");
     
 	for (int i = 0; i < n; i++) {
 		close(s[i]);

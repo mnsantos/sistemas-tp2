@@ -7,7 +7,8 @@
 #include <tiro.h>
 #include <queue>
 //rwlock
-#include "RWLock_sem.h"
+//~ #include "RWLock_sem.h"
+#include "RWLock_sem_librito.h"
 
 enum EstadoJuego {SETUP, DISPAROS, FINALIZADO};
 
@@ -30,6 +31,8 @@ class Modelo {
 		Evento	actualizar_jugador(int t_id);	/* devuelve el proximo evento del jugador */
         int     hayEventos(int s_id);
         Evento  dameEvento(int s_id);
+        
+        std::string damePuntajes();				/*genera un string con los puntajes*/
 		
 #ifdef DEBUG
 		void	print();

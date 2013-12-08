@@ -1,6 +1,7 @@
 #include <iostream>
 #include <stdlib.h>
-#include "RWLock_sem.h"
+//~ #include "RWLock_sem.h"
+#include "RWLock_sem_librito.h"
 #include <unistd.h>
 #include <pthread.h>
 
@@ -121,15 +122,26 @@ int main(int argc, char **argv)
 	
 	cout << endl << endl <<"termine 2 caso"<<endl;
 	
-		for (tid = 0; tid < cant_lectores; ++tid){
+		for (tid = 0; tid < cant_lectores/2; ++tid){
 		tidsR[tid] = tid;
 		pthread_create(&threadR[tid], NULL, lector ,&tidsR[tid]);
 	}	
 	
-	for (tid = 0; tid < cant_escritores; ++tid){
+	for (tid = 0; tid < cant_escritores/2; ++tid){
 		tidsW[tid] = tid;
 		pthread_create(&threadW[tid], NULL, escritor , &tidsW[tid]);
 	}
+	
+	for (tid = cant_lectores/2; tid < cant_lectores; ++tid){
+		tidsR[tid] = tid;
+		pthread_create(&threadR[tid], NULL, lector ,&tidsR[tid]);
+	}	
+	
+	for (tid = cant_escritores/2; tid < cant_escritores; ++tid){
+		tidsW[tid] = tid;
+		pthread_create(&threadW[tid], NULL, escritor , &tidsW[tid]);
+	}
+
 
 	//pthread exit(status)
 	//~ int * status;
@@ -143,7 +155,7 @@ int main(int argc, char **argv)
 		pthread_join(threadW[tid], NULL);
 	}
 	
-	cout << endl << endl <<"termine 2 caso"<<endl;
+	cout << endl << endl <<"termine 3er caso"<<endl;
 	
 	return 0;
 	
