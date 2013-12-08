@@ -57,4 +57,20 @@ Si llega un escritor mientras hay lectores en la sección crítica entonces este
 
 El primer lector en ingresar espera que no haya nadie presente en la sección crítica. Cuando el último lector se va, desbloquea $roomEmpty$ permitiendo que ingrese el escritor que estaba esperando. Cuando el escritor se va, desbloquea $turnstile$ permitiendo que cualquiera de los que estaba esperando (sea escritor o lector) acceda a la sección crítica. Esto último nos garantiza que la implementación se encuentra libre de inanición ya que tanto escritores como lectores tendrán acceso garantizado a la memoria compartida y no serán encolados por siempre.
 
+\subsection{Implementación 2}
+
+\subsection{Tester}
+
+Para corroborar el correcto funcionamiento del RWLock implementamos un tester (testerRW.cpp). Para utilizarlo es necesario pasarle dos parámetros: cantidad de lectores (L) y cantidad de escritores (E). El tester probará lo siguiente:
+
+\begin{itemize}
+	\item Que lean los L lectores y luego escriban los E escritores.
+	\item Que escriban los E escritores y luego lean los L lectores.
+	\item Que lean L/2 lectores y luego que escriban E/2 escritores. Repetir esto paso dos veces.
+\end{itemize}
+
+La idea es observar que el algoritmo se encuentre libre de $deadlock$ por lo que al tomar instancias grandes de lectores y escritores el tester no debería tildarse.
+
+
+
 
