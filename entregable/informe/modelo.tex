@@ -1,0 +1,13 @@
+Como vimos anteriormente, durante el transcurso del juego se tiene $n + m$ threads que acceden al modelo del juego, donde $n$ es la cantidad de jugadores y $m$ la cantidad de controladores que se conectan. 
+Lo que queremos hacer es que el juego no se rompa si varios threads quieren interactuar en simultáneo con los mismos elementos del juego. Por ejemplo queremos evitar inconsistencias en el modelo del juego cuando se conectan dos jugadores y se los agrega al modelo, o cuando dos jugadores ataquen al mismo jugador simultáneamente.
+
+Se utilizaron los siguientes locks para hacer $thread-safe$ el modelo:
+\begin{itemize}
+	\item	\textbf{lock\_jugadores} es un arreglo de RWLocks, uno por cada jugador, cada uno protege los elementos de cada uno de los jugadores.
+	\item	\textbf{lock\_estado\_jugadores} protege la integridad del arreglo de jugadores.
+	\item	\textbf{lock\_eventos}, es otro arreglo de RWLocks, asi como el anterior tiene un lock por cada jugador, protege las colas de eventos de cada uno.
+	\item	\textbf{lock\_estado\_eventos} protege la integridad del arreglo de eventos.
+	\item	\textbf{lock\_jugando} protege la variable jugando (el estado del juego).
+\end{itemize}
+
+Dado que nuestra implementación de RWLock no posee un método que transforme un lock de lectura en uno de escritura, si la función que estamos protegiendo hace lecturas de una variable y puede eventualmente modificarla debemos pedir el lock de escritura desde un principio. Esto sucede por ejemplo en las funciones $ubicar$ o $tocar$ donde el juego puede que cambie de estado. En un principio se lee la variable $jugando$ durante el chequeo de errores, verificando que el estado del juego sea el que debe ser. Pero si el último jugador termina de ubicar sus barcos o se produce un toque que elimina al ultimo contrincante el juego cambia de estado. Esto hace que no se permita concurrencia en dichas funciones, y que todas aquellas que hacen chequeos de error al comienzo deban esperar el lock.

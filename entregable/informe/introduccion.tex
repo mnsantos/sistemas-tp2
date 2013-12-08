@@ -1,2 +1,4 @@
-El siguiente trabajo tiene como objetivo realizar una implementación multi-threading de \textbf{BattleSystem} en base a la single-threading tal que soporte múltiples threads
+El siguiente trabajo tiene como objetivo realizar una implementación multi-threaded de \textbf{BattleSystem} en base a la single-threaded creada por los $mono-programadores$. Es decir, modificar la implementación existente de manera tal que soporte múltiples threads, para lo cual resulta necesaria la creación de un módulo que permita sincronizar los threads al momento de leer o escribir. 
+Así mismo se modificó el servidor para que lance un thread por cada jugador, uno por cada controlador y luego imprima los puntajes totales al finalizar el juego.
+Luego se protegio el modelo del juego, haciendo ese módulo $thread-safe$.
 
