@@ -68,7 +68,124 @@ El primer lector en ingresar espera que no haya nadie presente en la sección cr
 
 \subsection{Implementación 2}
 
+En esta implementación usamos 4 semáforos ($rw\_lock$, $accessR$, $accessW$ y $mutex$) y 4 contadores ($readers$, $readers\_waiting$, $writers$, $writers\_waiting$).
+Incialización:
 
+\begin{algorithm}[H]
+\caption{Inicialización}\label{ej1}
+\begin{algorithmic}[1]
+\Procedure{Inicialización}{}
+	\State rw\_lock = Semaphore(1)
+	\State accessR = Semaphore(0)
+	\State accessW = Semaphore(0)
+	\State mutex = Semaphore(1)
+	\State readers = 0
+	\State readers\_waiting = 0
+	\State writers = 0
+	\State writers\_waiting = 0
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+Código para los lectores:
+
+\begin{algorithm}[H]
+\caption{Readers}\label{ej1}
+\begin{algorithmic}[1]
+\Procedure{rlock}{}
+	\State mutex.wait()
+	\If{writers==0 \&\& writers\_waiting==0}
+		\If{readers==0}
+			\State rw\_lock.wait()
+		\EndIf
+		\State readers++
+		\State mutex.signal()
+	\Else
+		\State readers\_waiting++
+		\State mutex.signal()
+		\State accessR.wait()
+		\State mutex.wait()
+		\If{readers==0}
+			\State rw\_lock.wait()
+		\EndIf
+		\State readers++
+		\State mutex.signal()
+	\EndIf
+	\State //CRTICAL SECTION
+	
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+Para que un lector pueda acceder a la sección crítica debe cumplirse que no haya escritores esperando ni escribiendo. Si se cumple, entonces se incrementa la variable $readers$ y se accede a la sección crítica. Si no ocurre, se incrementa $readers\_waiting$ y se espera el lock de $accessR$ que será desbloqueado cuando el último escritor salga. Si es el primer lector en llegar, se bloquea aguardando el lock de rw\_lock para cersiorarse de que no haya escritores escribiendo.
+
+\begin{algorithm}[H]
+\caption{Readers}\label{ej1}
+\begin{algorithmic}[1]
+\Procedure{runlock}{}
+	\State mutex.wait()
+	\State readers $--$
+	\If{readers==0}
+		\If{writers\_waiting > 0}
+			\For{i $\shortleftarrow$ 0 to writers\_waiting}
+				\State accessW.signal()
+			\EndFor
+			\State writers\_waiting $\shortleftarrow$ 0
+			\State rw\_lock.signal()
+		\EndIf
+	\EndIf
+	\State mutex.signal()
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+Cuando el último lector sale verifica si hay escritores esperando. De ser así, tira tantos signals de $accessW$ como escritores haya. Luego reinicia la variable $writers\_waiting$ y desbloquea $rw\_lock$. Escritores:
+
+\begin{algorithm}[H]
+\caption{Writers}\label{ej1}
+\begin{algorithmic}[1]
+\Procedure{wlock}{}
+	\State mutex.wait()
+	\If{readers==0 \&\& readers\_waiting==0}
+		\State writers++
+		\State mutex.signal()
+		\State rw\_lock.wait()
+	\Else
+		\State writers\_waiting++
+		\State mutex.signal()
+		\State accessW.wait()
+		\State mutex.wait()
+		\State writers++
+		\State mutex.signal()
+		\State rw\_lock.wait()
+	\EndIf
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+Los escritores realizan un procedimiento similar a los lectores con la diferencia de que solo puede acceder un escritor a la vez. Por lo tanto, siempre deben esperar el lock de $rw\_lock$.
+
+\begin{algorithm}[H]
+\caption{Writers}\label{ej1}
+\begin{algorithmic}[1]
+\Procedure{wunlock}{}
+	\State mutex.wait()
+	\State writers $--$
+	\If{writers==0}
+		\If{readers\_waiting > 0}
+			\For{i $\shortleftarrow$ 0 to readers\_waiting}
+				\State accessR.signal()
+			\EndFor
+			\State readers\_waiting $\shortleftarrow$ 0
+		\EndIf
+	\EndIf
+	\State rw\_lock.signal()
+	\State mutex.signal()
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+Al igual que los lectores, el último escritor en salir despierta a todos los lectores que estaban esperando y reinicializa la variable $readers\_waiting$. Luego, desbloquea el $rw\_lock$.
 
 \subsection{Tester}
 
