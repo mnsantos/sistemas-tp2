@@ -13,10 +13,10 @@ OBJECTS=embarcacion.o elemento.o casilla.o tablero.o globales.o jugador.o modelo
 
 all: $(OBJECTS) libs server
 
-test: testerRW.cpp RWLock_sem.o
+test2: testerRW.cpp RWLock_sem.o
 	$(CXX) $(LDFLAGS) $(CXXFLAGS) -o $@ $^
 
-test2: testerRW.cpp RWLock_sem_librito.o
+test: testerRW.cpp RWLock_sem_librito.o
 	$(CXX) $(LDFLAGS) $(CXXFLAGS) -o $@ $^
 
 $(BINARY): server.cpp $(OBJECTS) $(JSONCPP)

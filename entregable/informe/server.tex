@@ -64,12 +64,12 @@ El funcionamiento es similar en el caso de los controladores. El $main$ $thread$
 \begin{algorithmic}[1]
 \Procedure{Controlador}{}
 	\State $pthread\_t  \ thread\_atencion\_controladores$
-	\State $pthread\_create(\&thread\_atencion\_controladores,NULL,accept\_c,NULL)$
-	\State $pthread\_t \ control\_threads[MAX\_CONTROLADORES]$
 	\State $int \ c\_tids[MAX\_CONTROLADORES]$
 	\For{controlador = 0 to MAX\_CONTROLADORES}
 		\State $c\_tids[controlador]= -1$
 	\EndFor
+	\State $pthread\_create(\&thread\_atencion\_controladores,NULL,accept\_c,NULL)$
+	\State $pthread\_t \ control\_threads[MAX\_CONTROLADORES]$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
@@ -115,3 +115,5 @@ Una vez que todos los $threads$ encargados de atender a los jugadores y controla
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
+
+El único thread al cual no se espera es el que se lanza para atender las nuevas conexiones de los controladores, dado que siempre esta bloqueado en espera. Igualmente luego de que el $main thread$ termine se cerrará junto con el. Fue decisión de implementación que cada thread de controlador cierre su propio socket, y que el $main thread$ se encargue de cerrar los sockets de los jugadores y los sockets de escucha $sock$ y $c\_sock$.

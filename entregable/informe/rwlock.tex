@@ -197,7 +197,7 @@ Para corroborar el correcto funcionamiento del RWLock implementamos un tester (t
 	\item Que lean L/2 lectores y luego que escriban E/2 escritores. Después que lean los lectores restantes y finalmente los escritores.
 \end{itemize}
 
-La idea es observar que el algoritmo se encuentre libre de $deadlock$ por lo que al tomar instancias grandes de lectores y escritores el tester no debería tildarse.
+La idea es observar que el algoritmo se encuentre libre de $deadlock$ por lo que al tomar instancias grandes de lectores y escritores el tester no debería tildarse. Así mismo para testear el RWLock\_sem se utilizaron prints de debug, para dejar en claro cuando llegan los escritores, toman el lock y lo liberan, cuando el primer lector toma el lock y como todos los demas lectores simplemente leen, y que lectores o escritores quedan en espera de que se libere el espacio para ellos.
 
 
 
