@@ -1,7 +1,15 @@
 Como vimos anteriormente, durante el transcurso del juego se tiene $n + m$ threads que acceden al modelo del juego, donde $n$ es la cantidad de jugadores y $m$ la cantidad de controladores que se conectan. 
 Lo que queremos hacer es que el juego no se rompa si varios threads quieren interactuar en simultáneo con los mismos elementos del juego. Por ejemplo queremos evitar inconsistencias en el modelo del juego cuando se conectan dos jugadores y se los agrega al modelo, o cuando dos jugadores ataquen al mismo jugador simultáneamente.
 
-Se utilizaron los siguientes locks para hacer $thread-safe$ el modelo:
+
+En particular es requisito del modelo que: 
+\begin{itemize}
+	\item Permita que todos los jugadores puedan atacar a jugadores $distintos$ de forma simultánea.
+	\item Permita que uno o varios jugadores puedan consultar el estado del tablero de un mismo jugador de forma simultanea.
+\end{itemize}
+
+
+Para ello se utilizaron los siguientes locks para hacer $thread-safe$ el modelo:
 \begin{itemize}
 	\item	\textbf{lock\_jugadores} es un arreglo de RWLocks, uno por cada jugador, cada uno protege los elementos de cada uno de los jugadores.
 	\item	\textbf{lock\_estado\_jugadores} protege la integridad del arreglo de jugadores.
@@ -10,4 +18,18 @@ Se utilizaron los siguientes locks para hacer $thread-safe$ el modelo:
 	\item	\textbf{lock\_jugando} protege la variable jugando (el estado del juego).
 \end{itemize}
 
-Dado que nuestra implementación de RWLock no posee un método que transforme un lock de lectura en uno de escritura, si la función que estamos protegiendo hace lecturas de una variable y puede eventualmente modificarla debemos pedir el lock de escritura desde un principio. Esto sucede por ejemplo en las funciones $ubicar$ o $tocar$ donde el juego puede que cambie de estado. En un principio se lee la variable $jugando$ durante el chequeo de errores, verificando que el estado del juego sea el que debe ser. Pero si el último jugador termina de ubicar sus barcos o se produce un toque que elimina al ultimo contrincante el juego cambia de estado. Esto hace que no se permita concurrencia en dichas funciones, y que todas aquellas que hacen chequeos de error al comienzo deban esperar el lock.
+Dado que nuestra implementación de RWLock no posee un método que transforme un lock de lectura en uno de escritura, si la función que estamos protegiendo hace lecturas de una variable y puede eventualmente modificarla debemos pedir el lock de escritura desde un principio. Esto sucede por ejemplo en las funciones $ubicar$ o $tocar$ con la variable $jugando$ donde el juego puede que cambie de estado. En un principio se lee la variable $jugando$ durante el chequeo de errores, verificando que el estado del juego sea el que debe ser. Pero si el último jugador termina de ubicar sus barcos o se produce un toque que elimina al ultimo contrincante el juego cambia de estado y por lo tanto debemos pedir el lock de jugando para escritura. Esto hace que no se permita concurrencia en dichas funciones, y que todas aquellas funciones que hacen chequeos de error con la variable $jugando$ al comienzo deban esperar el lock.
+
+
+Toda accion entre jugadores se ve reflejada en el arreglo de jugadores. $Lock\_estado\_jugadores$ protege dicho arreglo, pero no alcanza para paralelizar, por ejemplo, dos ataques a jugadores distintos dado que durante la escritura solo uno de ellos podria atacar y luego al obtener el lock el otro jugador podría realizar su ataque. En cambio, $lock\_estado\_jugadores$ se utiliza para proteger no los elementos del arreglo en si, sino su estado: si un jugador se agrega o se desuscribe se pide el lock de escritura de este RWLock para inicializar una nueva posicion en el arreglo de jugadores o eliminarla. A su vez $lock\_estado\_jugadores$ protege las variables $cant\_jugadores$ y $jugadores\_listos$, ligadas a todos los jugadores en conjunto. Cuando se desea modificar el estado del arreglo jugadores se pide el lock de escritura para asegurarnos que sólo el que modifica el estado accede a la sección critica. En todo otro caso se pide el lock de lectura para que otros lectores también puedan acceder.
+
+Para proteger el estado de $cada$ jugador utilizamos $lock\_jugadores$, pidiendo el $lock\_jugadores[i]$ cada vez que se lleve a cabo alguna operación sobre el estado del jugador $i$, lo cual permite paralelizar ataques a jugadores distintos. Hay que destacar que durante un ataque se piden los locks del atacante asi como del atacado, por lo tanto hay que diferenciar el caso en el cual un jugador se ataca a si mismo para no pedir el mismo lock dos veces. 
+
+Si dos o más jugadores pretenden atacar al mismo jugador, el lock de escritura no permitirá concurrencia, y el ataque que se realice primero será por parte del thread que pida el lock de escritura en primer lugar.
+
+Análogamente funcionan los locks para los eventos. Protegemos todo el arreglo de colas de eventos cuando deseamos realizar una operacion que modifica la integridad de dicho elemento y pedimos los locks de eventos de jugadores particulares ($lock\_eventos[i]$ para el jugador $i$) cuando queremos únicamente encolar un evento en un jugador en particular, para lograr de esta forma que puedan accederse en simultaneo a las colas de eventos de dos jugadores distintos.
+
+
+Dado que la lectura puede realizarse en simultáneo de acuerdo a la implementación de nuestro RWLock, la consulta del estado del tablero de un mismo jugador puede ser realizada en simultáneo por todos los jugadores que lo deseen. Se piden ambos $lock\_estado\_jugadores$ y $lock\_jugadores[i]$ en modo lectura. Esta protección se lleva a cabo en el $jsonificador$ que puesto que es friend class del $modelo$ al llegarle un comando de \textbf{Get\_Info} accede al mismo de forma privada.
+
+
