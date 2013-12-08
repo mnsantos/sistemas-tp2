@@ -1,0 +1,60 @@
+Se tiene determinada memoria compartida a la cual desean acceder dos tipos de procesos, lectores y escritores. Se deben cumplir las siguientes condiciones:
+\begin{itemize}
+	\item Solamente puede acceder un escritor al mismo tiempo. Si un lector o un escritor quiere ingresar a la memoria compartida y hay un escritor utilizándola, entonces debe esperar.
+	\item Pueden haber varios lectores utilizando la memoria compartida al mismo tiempo, pero si un escritor desea hacer uso de la memoria mientras los lectores la usan, deberá esperar.
+\end{itemize}
+
+En otras palabras, la presencia de un $thread$ (lectores) en la memoria compartida no necesariamente excluye el ingreso de otros $threads$ pero, la presencia de determinado tipo de $thread$ (escritores), si lo hace.
+
+Para resolver este problema implementamos dos estructuras de datos (RWLock\_libro y RWLock) que hacen uso de los semáforos POSIX. A continuación presentamos las dos soluciones:
+
+\subsection{Implementación 1} 
+
+En esta implementación utilizamos 3 semáforos y un contador inicializados de la siguiente manera:
+
+\begin{algorithmic}
+  \Function{Initialization}{}
+	\State turnstile = Semaphore(1)
+	\State mutex = Semaphore(1)
+	\State roomEmpty = Semaphore(1)
+	\State readers = 0
+  \EndFunction
+\end{algorithmic}
+
+En donde $mutex$ sirve para proteger la variable $readers$, $roomEmpty$ provee acceso exclusivo a la sección crítica y $turnstile$ evita la inanición de los escritores.
+
+\begin{algorithmic}
+  \Function{Writers}{}
+	\State turnstile.wait()
+	\State roomEmpty.wait()
+	\State //CRITICAL SECTION
+	\State turnstile.signal()
+	\State roomEmpty.signal()
+  \EndFunction
+\end{algorithmic}
+
+Si llega un escritor mientras hay lectores en la sección crítica entonces este se bloquea esperando el lock de $roomEmpty$ lo que significa que obtuvo el lock de $turnstile$. Esto último impedirá el acceso de más lectores mientras haya un escritor esperando (no hay inanición de escritores). A continuación, el código de los lectores:
+
+\begin{algorithmic}
+  \Function{Readers}{}
+	\State turnstile.wait()
+	\State turnstile.signal()
+	\State mutex.wait()
+	\State readers++
+	\If{readers==1}
+		\State roomEmpty.wait()
+	\EndIf
+	\State mutex.signal()
+	\State //CRITICAL SECTION
+	\State mutex.wait()
+	\State readers--
+	\If{readers==0}
+		\State roomEmpty.signal()
+	\EndIf
+	\State mutex.signal()
+  \EndFunction
+\end{algorithmic}
+
+El primer lector en ingresar espera que no haya nadie presente en la sección crítica. Cuando el último lector se va, desbloquea $roomEmpty$ permitiendo que ingrese el escritor que estaba esperando. Cuando el escritor se va, desbloquea $turnstile$ permitiendo que cualquiera de los que estaba esperando (sea escritor o lector) acceda a la sección crítica. Esto último nos garantiza que la implementación se encuentra libre de inanición ya que tanto escritores como lectores tendrán acceso garantizado a la memoria compartida y no serán encolados por siempre.
+
+
