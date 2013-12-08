@@ -65,6 +65,11 @@ El funcionamiento es similar en el caso de los controladores. El $main$ $thread$
 \Procedure{Controlador}{}
 	\State $pthread\_t  \ thread\_atencion\_controladores$
 	\State $pthread\_create(\&thread\_atencion\_controladores,NULL,accept\_c,NULL)$
+	\State $pthread\_t \ control\_threads[MAX\_CONTROLADORES]$
+	\State $int \ c\_tids[MAX\_CONTROLADORES]$
+	\For{controlador = 0 to MAX\_CONTROLADORES}
+		\State $c\_tids[controlador]= -1$
+	\EndFor
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
@@ -73,15 +78,16 @@ El funcionamiento es similar en el caso de los controladores. El $main$ $thread$
 \caption{accept\_c}\label{ej1}
 \begin{algorithmic}[1]
 \Procedure{accept\_c}{}
-	\State $pthread\_t \ control\_threads[MAX\_CONTROLADORES]$
-	\State $int \ c\_tids[MAX\_CONTROLADORES]$
 	\For{controlador = 0 to MAX\_CONTROLADORES}
+		\State $c\_tids[controlador]= controlador$
 		\State accept(controlador)
 		\State $pthread\_create(\&control\_threads[controlador],NULL,atencion\_c,\&c\_tids[controlador])$
 	\EndFor
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
+
+Notar que cuando un controlador establece la conexión se modifica su $c\_tid$. Esto se debe a que no necesariamente se conectan MAX\_CONTROLADORES controladores al sistema. Por lo tanto habrán a lo sumo MAX\_CONTROLADORES $threads$. Al finalizar el juego deben esperarse solo a los $threads$ creados.
 
 \begin{algorithm}[H]
 \caption{atencion\_c}\label{ej1}
@@ -103,7 +109,7 @@ Una vez que todos los $threads$ encargados de atender a los jugadores y controla
 	\For{int tid = 0 to n}
 		\State $pthread\_join(threads[tid], NULL)$
 	\EndFor
-	\For{int tid = 0 to MAX\_CONTROLADORES}
+	\For{int tid = 0 to MAX\_CONTROLADORES / $c\_tids[controlador] != -1$} \Comment{Solo se espera a los controladores que establecieron conexión hasta el momento}
 		\State $pthread\_join(control\_threads[tid], NULL)$
 	\EndFor
 \EndProcedure
